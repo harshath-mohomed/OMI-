@@ -1,0 +1,19 @@
+{
+  "name": "omi-multiplayer",
+  "version": "1.0.0",
+  "description": "Production-grade authoritative multiplayer Sri Lankan OMI card game.",
+  "main": "server/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.js",
+    "init-db": "node server/database/init.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "pg": "^8.22.0",
+    "redis": "^4.7.1",
+    "socket.io": "^4.7.5"
+  }
+}

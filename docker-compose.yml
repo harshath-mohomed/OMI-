@@ -1,0 +1,43 @@
+
+services:
+  server:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - PGHOST=postgres_db
+      - PGUSER=omi_admin
+      - PGPASSWORD=omi_secure_pass_2026
+      - PGDATABASE=omi_multiplayer
+      - PGPORT=5432
+      - REDIS_URL=redis://redis_cache:6379
+    depends_on:
+      - postgres_db
+      - redis_cache
+    restart: always
+
+  postgres_db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=omi_admin
+      - POSTGRES_PASSWORD=omi_secure_pass_2026
+      - POSTGRES_DB=omi_multiplayer
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  redis_cache:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:

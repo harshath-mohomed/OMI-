@@ -1,0 +1,12 @@
+# Local database secrets & environment configurations
+.env
+
+# Dependencies (Installed via npm locally)
+node_modules/
+
+# Leftover SQLite dev assets if any
+server/database/omi.db
+
+# OS tracking files
+.DS_Store
+Thumbs.db

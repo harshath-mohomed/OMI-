@@ -60,6 +60,17 @@ class GameClient {
       this.renderer.renderHand(state.yourHand || [], isYourTurn);
       this.renderer.updateMetadata(state, this.localState.seat);
 
+      const trumpModal = document.getElementById('trump-modal');
+      const chooserSeat = state.trumpChooserId
+        ? (state.players || []).find(p => p.id === state.trumpChooserId)?.seat
+        : null;
+
+      if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
+        trumpModal.classList.remove('hidden');
+      } else {
+        trumpModal.classList.add('hidden');
+      }
+
       if (state.phase === 'LOBBY' && playerList.length === 4 && this.localState.seat === 0) {
         this.socket.emit('startMatch');
       }

@@ -4,14 +4,22 @@ dotenv.config();
 export const CONFIG = {
   PORT: process.env.PORT || 3000,
   TARGET_GAME_POINTS: 10,
-  TRICKS_TO_WIN_ROUND: 5,
+  TRICKS_PER_HAND: 8,
+  TRICKS_TO_WIN_SCORE: 5,
   CARDS_PER_DEAL: 4,
   TOTAL_CARDS_HAND: 8,
+  PLAYING_RANKS: ['A', 'K', 'Q', 'J', '10', '9', '8', '7'],
   SUITS: ['HEARTS', 'DIAMONDS', 'CLUBS', 'SPADES'],
-  RANKS: ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'JACK', 'QUEEN', 'KING', 'ACE'],
+  RANKS: ['A', 'K', 'Q', 'J', '10', '9', '8', '7'],
   RANK_VALUES: {
-    '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
-    'JACK': 11, 'QUEEN': 12, 'KING': 13, 'ACE': 14
+    'A': 8,
+    'K': 7,
+    'Q': 6,
+    'J': 5,
+    '10': 4,
+    '9': 3,
+    '8': 2,
+    '7': 1
   },
   GAME_PHASES: {
     LOBBY: 'LOBBY',
@@ -21,6 +29,7 @@ export const CONFIG = {
     TRUMP_SELECTION: 'TRUMP_SELECTION',
     SECOND_DEAL: 'SECOND_DEAL',
     PLAYING: 'PLAYING',
+    HAND_END: 'HAND_END',
     ROUND_END: 'ROUND_END',
     MATCH_END: 'MATCH_END'
   }

@@ -8,10 +8,11 @@ export class RuleValidator {
    * @returns {boolean}
    */
   static isValidMove(card, hand, leadSuit) {
-    if (!leadSuit) return true; // Lead player can choose any card
+    if (!card || !hand) return false;
+    if (!leadSuit) return true;
     if (card.suit === leadSuit) return true;
 
     const hasLeadSuit = hand.some(c => c.suit === leadSuit);
-    return !hasLeadSuit; // Illegal if player breaks suit while holding matching cards
+    return !hasLeadSuit;
   }
 }

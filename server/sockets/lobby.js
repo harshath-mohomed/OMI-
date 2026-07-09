@@ -16,22 +16,22 @@ export function registerLobbyHandlers(io, socket, engine) {
       const player = new Player(userData.id, userData.username);
       player.socketId = socket.id;
 
-      const joinResult = room.addClient(player, asSpectator);
+      const joinResult = room.addClient(player, asSpectator, socket);
       socket.join(room.code);
       
       // Store session context data on the live socket instance
       socket.data.roomCode = room.code;
-      socket.data.playerId = player.id;
+      socket.data.playerId = joinResult.player ? joinResult.player.id : player.id;
 
       io.to(room.code).emit(EVENTS.PLAYER_JOINED, {
         roomCode: room.code,
-        player: player.toJSON(),
+        player: (joinResult.player || player).toJSON(),
         role: joinResult.role,
         isReconnect: joinResult.isReconnect
       });
 
       // Synchronize state immediately following registration actions
-      socket.emit(EVENTS.SYNC_STATE, room.getGameStateForPlayer(player));
+      socket.emit(EVENTS.SYNC_STATE, room.getGameStateForPlayer(joinResult.player || player));
 
     } catch (err) {
       socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });

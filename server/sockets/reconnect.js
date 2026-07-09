@@ -15,6 +15,7 @@ export function registerDisconnectHandlers(io, socket, engine) {
         role: cleanup.role,
         wasDisconnect: true
       });
+      room.broadcastGameState();
     }
   });
 }

@@ -8,7 +8,7 @@ export class Deck {
     this.reset();
   }
 
-  /** Populates the deck with a standard 52-card configurations. */
+  /** Populates the deck with the 32-card OMI play deck. */
   reset() {
     this.cards = [];
     for (const suit of CONFIG.SUITS) {

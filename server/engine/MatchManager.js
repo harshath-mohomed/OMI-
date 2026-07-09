@@ -2,6 +2,7 @@ import { CONFIG } from '../config.js';
 import { Dealer } from './Dealer.js';
 import { ScoreManager } from './ScoreManager.js';
 import { RoundManager } from './RoundManager.js';
+import { RuleValidator } from './RuleValidator.js';
 
 /** Orchestrates higher-level game state, phase tracking, and coordination wrappers. */
 export class MatchManager {
@@ -49,8 +50,8 @@ export class MatchManager {
       case CONFIG.GAME_PHASES.PLAYING:
         this.notifyActiveTurn();
         break;
-      case CONFIG.GAME_PHASES.ROUND_END:
-        this.evaluateRoundTransition();
+      case CONFIG.GAME_PHASES.HAND_END:
+        this.finishHand();
         break;
       case CONFIG.GAME_PHASES.MATCH_END:
         this.finalizeMatchStats();
@@ -59,6 +60,7 @@ export class MatchManager {
   }
 
   executeFirstDeal() {
+    this.players.forEach(player => player.clearHand());
     this.dealer.prepareDeck();
     this.dealer.dealToAll(this.players, CONFIG.CARDS_PER_DEAL);
 
@@ -118,41 +120,36 @@ export class MatchManager {
     if (this.phase !== CONFIG.GAME_PHASES.PLAYING) throw new Error('Illegal card play context.');
 
     const player = this.players.find(p => p.id === playerId);
+    if (!player) throw new Error('Unknown player.');
     if (player.seat !== this.roundManager.activeTurnSeat) throw new Error('Action executed out of turn sequence.');
 
     const targetCard = player.hand.find(c => c.id === cardId);
     if (!targetCard) throw new Error('Target asset payload missing reference.');
 
-    // Enforce matching ruleset validations
-    import('./RuleValidator.js').then(({ RuleValidator }) => {
-      if (!RuleValidator.isValidMove(targetCard, player.hand, this.roundManager.leadSuit)) {
-        this.emitCallback('MOVE_REJECTED', { playerId, reason: 'Must follow suit if possible.' });
-        return;
-      }
+    if (!RuleValidator.isValidMove(targetCard, player.hand, this.roundManager.leadSuit)) {
+      this.emitCallback('MOVE_REJECTED', { playerId, reason: 'Must follow suit if possible.' });
+      return;
+    }
 
-      // Execute transaction mutations safely
-      player.playCard(cardId);
-      this.emitCallback('CARD_VALIDATED', { playerId, seat: player.seat, card: targetCard });
+    player.playCard(cardId);
+    this.emitCallback('CARD_VALIDATED', { playerId, seat: player.seat, card: targetCard });
 
-      const result = this.roundManager.executePlay(player, targetCard);
+    const result = this.roundManager.executePlay(player, targetCard);
 
-      if (result.isTrickComplete) {
-        this.emitCallback('TRICK_RESOLVED', result.trickResult);
-        
-        const roundWinnerTeam = this.scoreManager.checkRoundWinner();
-        if (roundWinnerTeam) {
-          this.transitionTo(CONFIG.GAME_PHASES.ROUND_END);
-          return;
-        }
-      }
+    if (result.isTrickComplete) {
+      this.emitCallback('TRICK_RESOLVED', result.trickResult);
+    }
 
-      this.notifyActiveTurn();
-    });
+    if (result.isHandComplete) {
+      this.transitionTo(CONFIG.GAME_PHASES.HAND_END);
+      return;
+    }
+
+    this.notifyActiveTurn();
   }
 
-  evaluateRoundTransition() {
-    const roundWinnerTeam = this.scoreManager.checkRoundWinner();
-    const SummaryData = this.scoreManager.finalizeRoundPoints(roundWinnerTeam);
+  finishHand() {
+    const SummaryData = this.scoreManager.finalizeHand(this.roundManager.trumpTeam);
 
     this.emitCallback('ROUND_OVER_SUMMARY', SummaryData);
 
@@ -160,7 +157,6 @@ export class MatchManager {
     if (matchWinnerTeam) {
       this.transitionTo(CONFIG.GAME_PHASES.MATCH_END);
     } else {
-      // Clear data structures before the next round
       this.players.forEach(p => p.clearHand());
       this.dealer.rotateDealer();
       this.transitionTo(CONFIG.GAME_PHASES.FIRST_DEAL);

@@ -12,21 +12,12 @@ export class TrickResolver {
     }
 
     const leadSuit = plays[0].card.suit;
-    let winningPlay = plays[0];
+    const trumpPlays = plays.filter(play => play.card.suit === trumpSuit);
+    const candidatePlays = trumpPlays.length > 0 ? trumpPlays : plays.filter(play => play.card.suit === leadSuit);
 
-    for (let i = 1; i < plays.length; i++) {
-      const current = plays[i];
-      const best = winningPlay;
-
-      if (current.card.suit === trumpSuit && best.card.suit !== trumpSuit) {
-        winningPlay = current;
-      } else if (current.card.suit === trumpSuit && best.card.suit === trumpSuit) {
-        if (current.card.value > best.card.value) winningPlay = current;
-      } else if (current.card.suit === leadSuit && best.card.suit !== trumpSuit && best.card.suit === leadSuit) {
-        if (current.card.value > best.card.value) winningPlay = current;
-      }
-    }
-
-    return winningPlay.player;
+    return candidatePlays.reduce((bestPlay, currentPlay) => {
+      if (currentPlay.card.value > bestPlay.card.value) return currentPlay;
+      return bestPlay;
+    }, candidatePlays[0]).player;
   }
 }

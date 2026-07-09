@@ -15,6 +15,7 @@ export class Player {
 
   /** @returns {boolean} Whether player belongs to Team A (seats 0, 2) or Team B (seats 1, 3) */
   get team() {
+    if (this.seat === null || this.seat === undefined) return null;
     return this.seat % 2 === 0 ? 'A' : 'B';
   }
 

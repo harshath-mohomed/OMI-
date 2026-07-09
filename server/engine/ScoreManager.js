@@ -1,14 +1,14 @@
 import { CONFIG } from '../config.js';
 
-/** Calculates ongoing trick accumulations, structural matching, and adjustments. */
+/** Calculates trick counts, hanging bonuses, and score-token transfers. */
 export class ScoreManager {
   constructor() {
-    this.matchScores = { A: 0, B: 0 };
-    this.roundTricks = { A: 0, B: 0 };
+    this.resetMatch();
   }
 
   resetMatch() {
-    this.matchScores = { A: 0, B: 0 };
+    this.matchScores = { A: 10, B: 10 };
+    this.hangingBonus = 0;
     this.resetRound();
   }
 
@@ -22,49 +22,63 @@ export class ScoreManager {
   }
 
   /**
-   * Checks if a team has reached 5 tricks to end the round.
-   * @returns {string|null} Winning team token identification or null
+   * Finalizes a hand and transfers score tokens according to OMI rules.
+   * @param {string} trumpTeam
+   * @returns {Object}
    */
-  checkRoundWinner() {
-    if (this.roundTricks.A >= CONFIG.TRICKS_TO_WIN_ROUND) return 'A';
-    if (this.roundTricks.B >= CONFIG.TRICKS_TO_WIN_ROUND) return 'B';
-    return null;
-  }
+  finalizeHand(trumpTeam) {
+    const teamA = this.roundTricks.A;
+    const teamB = this.roundTricks.B;
 
-  /**
-   * Finalizes score tallies and allocates match scaling indicators.
-   * @param {string} winningTeam 
-   * @returns {Object} Final calculation state data maps
-   */
-  finalizeRoundPoints(winningTeam) {
-    const losingTeam = winningTeam === 'A' ? 'B' : 'A';
-    const winTricks = this.roundTricks[winningTeam];
-    const loseTricks = this.roundTricks[losingTeam];
-
-    let allocatedPoints = 0;
-    let isKaputhi = false;
-
-    if (winTricks === 8) {
-      allocatedPoints = 3; // Structural maximum sweep definition
-      isKaputhi = true;
-    } else if (winTricks > loseTricks) {
-      allocatedPoints = 1;
+    if (teamA === 4 && teamB === 4) {
+      this.hangingBonus = 1;
+      return {
+        winningTeam: null,
+        losingTeam: null,
+        allocatedPoints: 0,
+        isKaputhi: false,
+        isHanging: true,
+        hangingBonusCarried: 1,
+        currentMatchScores: { ...this.matchScores }
+      };
     }
 
+    const winningTeam = teamA > teamB ? 'A' : 'B';
+    const losingTeam = winningTeam === 'A' ? 'B' : 'A';
+    const winTricks = this.roundTricks[winningTeam];
+    const isKaputhi = winTricks === CONFIG.TRICKS_PER_HAND;
+
+    let basePoints = 0;
+    if (isKaputhi) {
+      basePoints = 3;
+    } else if (winTricks >= CONFIG.TRICKS_TO_WIN_SCORE && winTricks <= 7) {
+      basePoints = winningTeam === trumpTeam ? 1 : 2;
+    }
+
+    const bonusPoints = this.hangingBonus;
+    const requestedPoints = basePoints + bonusPoints;
+    const allocatedPoints = Math.min(requestedPoints, this.matchScores[losingTeam]);
+
     this.matchScores[winningTeam] += allocatedPoints;
+    this.matchScores[losingTeam] -= allocatedPoints;
+    this.hangingBonus = 0;
 
     return {
       winningTeam,
+      losingTeam,
       allocatedPoints,
+      basePoints,
+      bonusPoints,
       isKaputhi,
+      isHanging: false,
       currentMatchScores: { ...this.matchScores }
     };
   }
 
   /** Checks for a match winner. */
   checkMatchWinner() {
-    if (this.matchScores.A >= CONFIG.TARGET_GAME_POINTS) return 'A';
-    if (this.matchScores.B >= CONFIG.TARGET_GAME_POINTS) return 'B';
+    if (this.matchScores.A === CONFIG.TARGET_GAME_POINTS && this.matchScores.B === 0) return 'A';
+    if (this.matchScores.B === CONFIG.TARGET_GAME_POINTS && this.matchScores.A === 0) return 'B';
     return null;
   }
 }

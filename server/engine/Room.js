@@ -13,6 +13,7 @@ export class Room {
     this.matchRepo = matchRepo;
     this.players = [];       // Max 4 player entries
     this.spectators = [];    // Unlimited spectator slots
+    this.connections = new Map();
     /** @type {MatchManager|null} */
     this.matchManager = null;
   }
@@ -22,9 +23,10 @@ export class Room {
    * @param {Player} playerInstance 
    * @param {boolean} asSpectator 
    */
-  addClient(playerInstance, asSpectator = false) {
+  addClient(playerInstance, asSpectator = false, socket = null) {
     if (asSpectator) {
       this.spectators.push(playerInstance);
+      if (socket) this.connections.set(playerInstance.id, socket);
       return { role: 'SPECTATOR' };
     }
 
@@ -32,29 +34,34 @@ export class Room {
     if (existing) {
       existing.isDisconnected = false;
       existing.socketId = playerInstance.socketId;
-      return { role: 'PLAYER', isReconnect: true, seat: existing.seat };
+      if (socket) this.connections.set(existing.id, socket);
+      return { role: 'PLAYER', isReconnect: true, seat: existing.seat, player: existing };
     }
 
     if (this.players.length >= 4) {
       this.spectators.push(playerInstance);
+      if (socket) this.connections.set(playerInstance.id, socket);
       return { role: 'SPECTATOR', message: 'Room full. Joined as spectator.' };
     }
 
     playerInstance.seat = this.players.length;
     this.players.push(playerInstance);
-    return { role: 'PLAYER', isReconnect: false, seat: playerInstance.seat };
+    if (socket) this.connections.set(playerInstance.id, socket);
+    return { role: 'PLAYER', isReconnect: false, seat: playerInstance.seat, player: playerInstance };
   }
 
   removeClient(socketId) {
     const pIdx = this.players.findIndex(p => p.socketId === socketId);
     if (pIdx !== -1) {
       this.players[pIdx].isDisconnected = true;
+      this.connections.delete(this.players[pIdx].id);
       return { role: 'PLAYER', player: this.players[pIdx] };
     }
 
     const sIdx = this.spectators.findIndex(s => s.socketId === socketId);
     if (sIdx !== -1) {
       const spec = this.spectators.splice(sIdx, 1)[0];
+      this.connections.delete(spec.id);
       return { role: 'SPECTATOR', player: spec };
     }
     return null;
@@ -66,9 +73,18 @@ export class Room {
     this.matchManager = new MatchManager(this.code, this.players, (evt, data) => {
       ioNamespace.to(this.code).emit(evt, data);
       this.handleStatePersistIntercept(evt, data);
+      this.broadcastGameState();
     });
 
     this.matchManager.initializeMatch();
+  }
+
+  broadcastGameState() {
+    for (const participant of [...this.players, ...this.spectators]) {
+      const socket = this.connections.get(participant.id);
+      if (!socket) continue;
+      socket.emit('syncState', this.getGameStateForPlayer(participant));
+    }
   }
 
   /** Optional tracking hooking mechanics intercepts */
@@ -101,8 +117,13 @@ export class Room {
         trumpSuit: null,
         activeTurnSeat: null,
         leadSuit: null,
-        matchScores: { A: 0, B: 0 },
+        trumpChooserId: null,
+        trumpTeam: null,
+        matchScores: { A: 10, B: 10 },
+        scoringTokens: { A: 10, B: 10 },
         roundTricks: { A: 0, B: 0 },
+        hangingBonus: 0,
+        tricksPlayed: 0,
         currentTrick: []
       };
     }
@@ -114,8 +135,13 @@ export class Room {
       trumpSuit: this.matchManager.roundManager.trumpSuit,
       activeTurnSeat: this.matchManager.roundManager.activeTurnSeat,
       leadSuit: this.matchManager.roundManager.leadSuit,
+      trumpChooserId: this.matchManager.roundManager.trumpChooser?.id ?? null,
+      trumpTeam: this.matchManager.roundManager.trumpTeam,
       matchScores: this.matchManager.scoreManager.matchScores,
+      scoringTokens: this.matchManager.scoreManager.matchScores,
       roundTricks: this.matchManager.scoreManager.roundTricks,
+      hangingBonus: this.matchManager.scoreManager.hangingBonus,
+      tricksPlayed: this.matchManager.roundManager.tricksPlayed,
       currentTrick: this.matchManager.roundManager.currentTrick.map(t => ({
         seat: t.player.seat,
         card: t.card.toJSON()

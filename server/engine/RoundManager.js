@@ -1,4 +1,5 @@
 import { TrickResolver } from './TrickResolver.js';
+import { CONFIG } from '../config.js';
 
 /** Handles the live round gameplay loop and trick mechanics. */
 export class RoundManager {
@@ -11,6 +12,7 @@ export class RoundManager {
     this.scoreManager = scoreManager;
     this.trumpSuit = null;
     this.trumpChooser = null;
+    this.trumpTeam = null;
     this.currentTrick = []; // Array of { player, card }
     this.activeTurnSeat = null;
     this.leadSuit = null;
@@ -24,6 +26,7 @@ export class RoundManager {
   startNewRound(chooser) {
     this.trumpSuit = null;
     this.trumpChooser = chooser;
+    this.trumpTeam = chooser.team;
     this.currentTrick = [];
     this.leadSuit = null;
     this.tricksPlayed = 0;
@@ -32,6 +35,9 @@ export class RoundManager {
   }
 
   setTrump(suit) {
+    if (!CONFIG.SUITS.includes(suit)) {
+      throw new Error('Invalid trump suit selected.');
+    }
     this.trumpSuit = suit;
   }
 
@@ -50,6 +56,7 @@ export class RoundManager {
     
     const isTrickComplete = this.currentTrick.length === 4;
     let trickResult = null;
+    let isHandComplete = false;
 
     if (isTrickComplete) {
       const winner = TrickResolver.resolveTrick(this.currentTrick, this.trumpSuit);
@@ -65,13 +72,15 @@ export class RoundManager {
 
       this.currentTrick = [];
       this.leadSuit = null;
-      this.activeTurnSeat = winner.seat; // Trick winner acts next
+      this.activeTurnSeat = winner.seat;
+      isHandComplete = this.tricksPlayed >= CONFIG.TRICKS_PER_HAND;
     } else {
-      this.activeTurnSeat = (this.activeTurnSeat + 1) % 4;
+      this.activeTurnSeat = (this.activeTurnSeat + 3) % 4;
     }
 
     return {
       isTrickComplete,
+      isHandComplete,
       trickResult,
       nextTurnSeat: this.activeTurnSeat
     };

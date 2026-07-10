@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const CONFIG = {
+  HOST: process.env.HOST || '0.0.0.0',
   PORT: process.env.PORT || 3000,
   TARGET_GAME_POINTS: 10,
   TRICKS_PER_HAND: 8,

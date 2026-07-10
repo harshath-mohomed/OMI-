@@ -12,16 +12,45 @@ class GameClient {
 
     this.bindDOMEvents();
     this.bindSocketEvents();
+    this.showHomeScreen();
+  }
+
+  showHomeScreen() {
+    document.getElementById('home-screen')?.classList.remove('hidden');
+    document.getElementById('lobby-screen')?.classList.add('hidden');
+    document.getElementById('game-screen')?.classList.add('hidden');
+  }
+
+  showLobbyScreen() {
+    document.getElementById('home-screen')?.classList.add('hidden');
+    document.getElementById('lobby-screen')?.classList.remove('hidden');
+    document.getElementById('game-screen')?.classList.add('hidden');
   }
 
   bindDOMEvents() {
-    document.getElementById('btn-join').addEventListener('click', () => {
+    document.getElementById('btn-home-play').addEventListener('click', () => {
+      this.showLobbyScreen();
+      document.getElementById('input-username')?.focus();
+    });
+
+    const joinRoom = (roomCode) => {
       const username = document.getElementById('input-username').value.trim();
-      const roomCode = document.getElementById('input-room').value.trim().toUpperCase();
-      
-      if (!username) return alert('Username required');
+
+      if (!username) return alert('NAME required');
 
       this.socket.emit('joinRoom', { username, roomCode, asSpectator: false });
+    };
+
+    document.getElementById('btn-create-room').addEventListener('click', () => {
+      joinRoom('');
+    });
+
+    document.getElementById('btn-join-room').addEventListener('click', () => {
+      const roomCode = document.getElementById('input-room').value.trim().toUpperCase();
+
+      if (!roomCode) return alert('ROOM CODE required');
+
+      joinRoom(roomCode);
     });
 
     // Intercept Modal asset control choices
@@ -53,6 +82,7 @@ class GameClient {
       
       if (identity) this.localState.seat = identity.seat;
 
+      document.getElementById('home-screen').classList.add('hidden');
       document.getElementById('lobby-screen').classList.add('hidden');
       document.getElementById('game-screen').classList.remove('hidden');
 

@@ -7,7 +7,7 @@ class GameClient {
     this.socket = socketConnectionManager.initialize();
     this.renderer = new Renderer();
     this.animation = new AnimationEngine();
-    
+
     this.localState = { seat: null, currentGameState: null };
 
     this.bindDOMEvents();
@@ -53,7 +53,6 @@ class GameClient {
       joinRoom(roomCode);
     });
 
-    // Intercept Modal asset control choices
     document.querySelectorAll('#trump-modal button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const suit = e.target.dataset.suit;
@@ -62,11 +61,10 @@ class GameClient {
       });
     });
 
-    // Delegated operational play interception triggers
     document.getElementById('player-hand-container').addEventListener('click', (e) => {
       const targetCard = e.target.closest('[data-card-id]');
       if (!targetCard) return;
-      
+
       const cardId = targetCard.dataset.cardId;
       this.socket.emit('playCard', { cardId });
     });
@@ -75,11 +73,10 @@ class GameClient {
   bindSocketEvents() {
     this.socket.on('syncState', (state) => {
       this.localState.currentGameState = state;
-      
-      // Added data guard fallback (state.players || []) to completely prevent undefined crashes
+
       const playerList = state.players || [];
       const identity = playerList.find(p => p.id === this.socket.id || p.username === document.getElementById('input-username').value.trim());
-      
+
       if (identity) this.localState.seat = identity.seat;
 
       document.getElementById('home-screen').classList.add('hidden');
@@ -109,5 +106,4 @@ class GameClient {
   }
 }
 
-// Initial structural bootstrap execution orchestration allocation call
 new GameClient();

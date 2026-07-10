@@ -21,7 +21,7 @@ export class Renderer {
         card.suit === 'HEARTS' || card.suit === 'DIAMONDS' ? 'text-red-600' : 'text-gray-900'
       }`;
       cardEl.dataset.cardId = card.id;
-      
+
       cardEl.innerHTML = `
         <div class="text-left">${card.rank}</div>
         <div class="text-center text-2xl">${this.suitSymbols[card.suit]}</div>

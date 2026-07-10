@@ -30,8 +30,8 @@ export function registerLobbyHandlers(io, socket, engine) {
         isReconnect: joinResult.isReconnect
       });
 
-      // Synchronize state immediately following registration actions
-      socket.emit(EVENTS.SYNC_STATE, room.getGameStateForPlayer(joinResult.player || player));
+      // Synchronize state immediately following registration actions for every participant.
+      room.broadcastGameState();
 
     } catch (err) {
       socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });

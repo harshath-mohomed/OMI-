@@ -7,7 +7,7 @@ class GameClient {
     this.socket = socketConnectionManager.initialize();
     this.renderer = new Renderer();
     this.animation = new AnimationEngine();
-    
+
     this.localState = { seat: null, currentGameState: null };
 
     this.bindDOMEvents();
@@ -27,33 +27,38 @@ class GameClient {
     document.getElementById('game-screen')?.classList.add('hidden');
   }
 
+  showGameScreen() {
+    document.getElementById('home-screen')?.classList.add('hidden');
+    document.getElementById('lobby-screen')?.classList.add('hidden');
+    document.getElementById('game-screen')?.classList.remove('hidden');
+  }
+
+  joinRoom(roomCode) {
+    const username = document.getElementById('input-username').value.trim();
+
+    if (!username) return alert('NAME required');
+
+    this.socket.emit('joinRoom', { username, roomCode, asSpectator: false });
+  }
+
   bindDOMEvents() {
     document.getElementById('btn-home-play').addEventListener('click', () => {
-      this.showLobbyScreen();
-      document.getElementById('input-username')?.focus();
-    });
-
-    const joinRoom = (roomCode) => {
-      const username = document.getElementById('input-username').value.trim();
-
-      if (!username) return alert('NAME required');
-
-      this.socket.emit('joinRoom', { username, roomCode, asSpectator: false });
-    };
-
-    document.getElementById('btn-create-room').addEventListener('click', () => {
-      joinRoom('');
-    });
-
-    document.getElementById('btn-join-room').addEventListener('click', () => {
       const roomCode = document.getElementById('input-room').value.trim().toUpperCase();
-
-      if (!roomCode) return alert('ROOM CODE required');
-
-      joinRoom(roomCode);
+      this.joinRoom(roomCode);
     });
 
-    // Intercept Modal asset control choices
+    document.getElementById('input-username').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        document.getElementById('btn-home-play').click();
+      }
+    });
+
+    document.getElementById('input-room').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        document.getElementById('btn-home-play').click();
+      }
+    });
+
     document.querySelectorAll('#trump-modal button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const suit = e.target.dataset.suit;
@@ -62,11 +67,10 @@ class GameClient {
       });
     });
 
-    // Delegated operational play interception triggers
     document.getElementById('player-hand-container').addEventListener('click', (e) => {
       const targetCard = e.target.closest('[data-card-id]');
       if (!targetCard) return;
-      
+
       const cardId = targetCard.dataset.cardId;
       this.socket.emit('playCard', { cardId });
     });
@@ -75,16 +79,18 @@ class GameClient {
   bindSocketEvents() {
     this.socket.on('syncState', (state) => {
       this.localState.currentGameState = state;
-      
-      // Added data guard fallback (state.players || []) to completely prevent undefined crashes
+
       const playerList = state.players || [];
       const identity = playerList.find(p => p.id === this.socket.id || p.username === document.getElementById('input-username').value.trim());
-      
+
       if (identity) this.localState.seat = identity.seat;
 
-      document.getElementById('home-screen').classList.add('hidden');
-      document.getElementById('lobby-screen').classList.add('hidden');
-      document.getElementById('game-screen').classList.remove('hidden');
+      if (state.phase === 'LOBBY') {
+        this.showLobbyScreen();
+        this.renderer.renderLobby(state);
+      } else {
+        this.showGameScreen();
+      }
 
       const isYourTurn = state.activeTurnSeat === this.localState.seat && state.phase === 'PLAYING';
       this.renderer.renderHand(state.yourHand || [], isYourTurn);
@@ -109,5 +115,4 @@ class GameClient {
   }
 }
 
-// Initial structural bootstrap execution orchestration allocation call
 new GameClient();

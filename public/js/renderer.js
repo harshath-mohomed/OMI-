@@ -21,7 +21,7 @@ export class Renderer {
         card.suit === 'HEARTS' || card.suit === 'DIAMONDS' ? 'text-red-600' : 'text-gray-900'
       }`;
       cardEl.dataset.cardId = card.id;
-      
+
       cardEl.innerHTML = `
         <div class="text-left">${card.rank}</div>
         <div class="text-center text-2xl">${this.suitSymbols[card.suit]}</div>
@@ -70,6 +70,21 @@ export class Renderer {
       `;
       this.trickMat.appendChild(cardEl);
     });
+  }
+
+  renderLobby(state) {
+    const players = state.players || [];
+    const seatLabels = [0, 2, 1, 3];
+
+    seatLabels.forEach((seat) => {
+      const element = document.getElementById(`lobby-seat-${seat}`);
+      if (!element) return;
+
+      const player = players.find((entry) => entry.seat === seat);
+      element.innerText = player ? player.username : 'waiting';
+    });
+
+    this.setElementText('lobby-room-code', state.roomCode ? `ROOM ${state.roomCode}` : 'ROOM ----');
   }
 
   updateMetadata(state, localSeat) {

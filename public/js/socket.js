@@ -2,7 +2,8 @@
 export const socketConnectionManager = {
   socket: null,
   initialize() {
-    this.socket = io({ autoConnect: true });
+    const socketUrl = window.location.origin;
+    this.socket = io(socketUrl, { autoConnect: true });
     return this.socket;
   }
 };

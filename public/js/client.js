@@ -27,36 +27,30 @@ class GameClient {
     document.getElementById('game-screen')?.classList.add('hidden');
   }
 
-  showGameScreen() {
-    document.getElementById('home-screen')?.classList.add('hidden');
-    document.getElementById('lobby-screen')?.classList.add('hidden');
-    document.getElementById('game-screen')?.classList.remove('hidden');
-  }
-
-  joinRoom(roomCode) {
-    const username = document.getElementById('input-username').value.trim();
-
-    if (!username) return alert('NAME required');
-
-    this.socket.emit('joinRoom', { username, roomCode, asSpectator: false });
-  }
-
   bindDOMEvents() {
     document.getElementById('btn-home-play').addEventListener('click', () => {
+      this.showLobbyScreen();
+      document.getElementById('input-username')?.focus();
+    });
+
+    const joinRoom = (roomCode) => {
+      const username = document.getElementById('input-username').value.trim();
+
+      if (!username) return alert('NAME required');
+
+      this.socket.emit('joinRoom', { username, roomCode, asSpectator: false });
+    };
+
+    document.getElementById('btn-create-room').addEventListener('click', () => {
+      joinRoom('');
+    });
+
+    document.getElementById('btn-join-room').addEventListener('click', () => {
       const roomCode = document.getElementById('input-room').value.trim().toUpperCase();
-      this.joinRoom(roomCode);
-    });
 
-    document.getElementById('input-username').addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        document.getElementById('btn-home-play').click();
-      }
-    });
+      if (!roomCode) return alert('ROOM CODE required');
 
-    document.getElementById('input-room').addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        document.getElementById('btn-home-play').click();
-      }
+      joinRoom(roomCode);
     });
 
     document.querySelectorAll('#trump-modal button').forEach(btn => {
@@ -85,12 +79,9 @@ class GameClient {
 
       if (identity) this.localState.seat = identity.seat;
 
-      if (state.phase === 'LOBBY') {
-        this.showLobbyScreen();
-        this.renderer.renderLobby(state);
-      } else {
-        this.showGameScreen();
-      }
+      document.getElementById('home-screen').classList.add('hidden');
+      document.getElementById('lobby-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
 
       const isYourTurn = state.activeTurnSeat === this.localState.seat && state.phase === 'PLAYING';
       this.renderer.renderHand(state.yourHand || [], isYourTurn);

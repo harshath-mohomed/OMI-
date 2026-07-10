@@ -1,5 +1,6 @@
 import express from 'express';
 import { createServer } from 'http';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
@@ -18,6 +19,27 @@ import { MatchRepository } from './database/MatchRepository.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const httpServer = createServer(app);
+
+const getLanAddress = () => {
+  const interfaces = os.networkInterfaces();
+
+  for (const networkInterface of Object.values(interfaces)) {
+    if (!networkInterface) continue;
+
+    for (const address of networkInterface) {
+      if (address.family === 'IPv4' && !address.internal) {
+        return address.address;
+      }
+    }
+  }
+
+  return null;
+};
+
+const exitOnStartupFailure = (context, error) => {
+  console.error(`[CRITICAL] ${context}`, error);
+  process.exit(1);
+};
 
 // Initialize PostgreSQL Pool using your local environment variables
 const pool = new pg.Pool({
@@ -38,23 +60,67 @@ const initializeDatabaseSchema = async () => {
   await pool.query(schemaSql);
   console.log('[INFO] Native PostgreSQL Schema verified successfully.');
 };
-initializeDatabaseSchema().catch(err => console.error('[CRITICAL] Local Postgres Connection Error:', err));
-
-// Connect to native Redis running locally on your hardware
-const redisClient = createClient({ url: process.env.REDIS_URL });
-redisClient.on('error', (err) => console.error('[ERROR] Native Redis Connection Failure:', err));
-await redisClient.connect().then(() => console.log('[INFO] Native Redis Interface Active.'));
-
-// Instantiate Pure Domain Components with New Repositories
-const playerRepo = new PlayerRepository(pool);
-const matchRepo = new MatchRepository(pool);
-const engine = new GameEngine(playerRepo, matchRepo);
-
-// Bind WebSockets Layer (Ensuring optimized transport configuration)
-initializeSocketLayer(httpServer, engine);
 
 app.use(express.static(path.join(__dirname, '../public')));
 
-httpServer.listen(CONFIG.PORT, '0.0.0.0', () => {
-  console.log(`[INFO] Authoritative OMI Stack running on native port environment: http://localhost:${CONFIG.PORT}`);
-});
+const startServer = async () => {
+  try {
+    await initializeDatabaseSchema();
+
+    const redisUrl = process.env.REDIS_URL?.trim();
+    if (redisUrl) {
+      const redisClient = createClient({
+        url: redisUrl,
+        socket: {
+          reconnectStrategy: () => false
+        }
+      });
+
+      let redisErrorLogged = false;
+      redisClient.on('error', (err) => {
+        if (redisErrorLogged) return;
+        redisErrorLogged = true;
+        console.error('[ERROR] Native Redis Connection Failure:', err);
+      });
+
+      try {
+        await redisClient.connect();
+        console.log('[INFO] Native Redis Interface Active.');
+      } catch (error) {
+        console.warn('[WARN] Redis unavailable at startup; continuing without Redis-backed cache.', error);
+      }
+    } else {
+      console.warn('[WARN] REDIS_URL is not set; continuing without Redis-backed cache.');
+    }
+
+    // Instantiate Pure Domain Components with New Repositories
+    const playerRepo = new PlayerRepository(pool);
+    const matchRepo = new MatchRepository(pool);
+    const engine = new GameEngine(playerRepo, matchRepo);
+
+    // Bind WebSockets Layer (Ensuring optimized transport configuration)
+    initializeSocketLayer(httpServer, engine);
+
+    httpServer.on('error', (error) => {
+      exitOnStartupFailure(`Server failed to bind on ${CONFIG.HOST}:${CONFIG.PORT}.`, error);
+    });
+
+    httpServer.listen(CONFIG.PORT, CONFIG.HOST, () => {
+      const lanAddress = getLanAddress();
+      const bindHost = CONFIG.HOST || '0.0.0.0';
+      const localUrl = `http://localhost:${CONFIG.PORT}`;
+      const networkUrl = lanAddress ? `http://${lanAddress}:${CONFIG.PORT}` : null;
+
+      console.log(`[INFO] Authoritative OMI Stack running on ${bindHost}:${CONFIG.PORT}`);
+      console.log(`[INFO] Open locally: ${localUrl}`);
+
+      if (networkUrl) {
+        console.log(`[INFO] Other devices on the same Wi-Fi can use: ${networkUrl}`);
+      }
+    });
+  } catch (error) {
+    exitOnStartupFailure('PostgreSQL startup failed. The server did not bind to a port.', error);
+  }
+};
+
+startServer();

@@ -72,21 +72,6 @@ export class Renderer {
     });
   }
 
-  renderLobby(state) {
-    const players = state.players || [];
-    const seatLabels = [0, 2, 1, 3];
-
-    seatLabels.forEach((seat) => {
-      const element = document.getElementById(`lobby-seat-${seat}`);
-      if (!element) return;
-
-      const player = players.find((entry) => entry.seat === seat);
-      element.innerText = player ? player.username : 'waiting';
-    });
-
-    this.setElementText('lobby-room-code', state.roomCode ? `ROOM ${state.roomCode}` : 'ROOM ----');
-  }
-
   updateMetadata(state, localSeat) {
     const players = state.players || [];
     const matchScores = state.matchScores || { A: 10, B: 10 };

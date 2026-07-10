@@ -15,22 +15,28 @@ class GameClient {
     this.showHomeScreen();
   }
 
+  showGameScreen() {
+    document.getElementById('home-screen')?.classList.add('hidden');
+    document.getElementById('lobby-screen')?.classList.add('hidden');
+    document.getElementById('game-screen')?.classList.remove('hidden');
+    document.querySelector('.landing-bg')?.classList.add('hidden');
+    document.querySelector('.landing-overlay')?.classList.add('hidden');
+  }
+
   showHomeScreen() {
     document.getElementById('home-screen')?.classList.remove('hidden');
     document.getElementById('lobby-screen')?.classList.add('hidden');
     document.getElementById('game-screen')?.classList.add('hidden');
+    document.querySelector('.landing-bg')?.classList.remove('hidden');
+    document.querySelector('.landing-overlay')?.classList.remove('hidden');
   }
 
   showLobbyScreen() {
     document.getElementById('home-screen')?.classList.add('hidden');
     document.getElementById('lobby-screen')?.classList.remove('hidden');
     document.getElementById('game-screen')?.classList.add('hidden');
-  }
-
-  showGameScreen() {
-    document.getElementById('home-screen')?.classList.add('hidden');
-    document.getElementById('lobby-screen')?.classList.add('hidden');
-    document.getElementById('game-screen')?.classList.remove('hidden');
+    document.querySelector('.landing-bg')?.classList.remove('hidden');
+    document.querySelector('.landing-overlay')?.classList.remove('hidden');
   }
 
   joinRoom(roomCode) {
@@ -74,9 +80,41 @@ class GameClient {
       const cardId = targetCard.dataset.cardId;
       this.socket.emit('playCard', { cardId });
     });
+
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+      chatInput.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        this.socket.emit('chatMessage', { text });
+        chatInput.value = '';
+      });
+    }
+  }
+
+  appendChatMessage({ senderId, text, timestamp }) {
+    const container = document.getElementById('chat-messages');
+    if (!container || !text) return;
+
+    const players = this.localState.currentGameState?.players || [];
+    const sender = players.find(p => p.id === senderId);
+    const name = sender?.username || 'Player';
+    const time = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+    const line = document.createElement('div');
+    line.textContent = time ? `[${time}] ${name}: ${text}` : `${name}: ${text}`;
+    container.appendChild(line);
+    container.scrollTop = container.scrollHeight;
   }
 
   bindSocketEvents() {
+    this.socket.on('chatMessage', (payload) => {
+      this.appendChatMessage(payload);
+    });
+
     this.socket.on('syncState', (state) => {
       this.localState.currentGameState = state;
 

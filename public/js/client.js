@@ -88,6 +88,7 @@ class GameClient {
 
       const isYourTurn = state.activeTurnSeat === this.localState.seat && state.phase === 'PLAYING';
       this.renderer.renderHand(state.yourHand || [], isYourTurn);
+      this.renderer.renderTrick(state.currentTrick || [], this.localState.seat);
       this.renderer.updateMetadata(state, this.localState.seat);
 
       const trumpModal = document.getElementById('trump-modal');

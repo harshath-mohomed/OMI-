@@ -2,6 +2,7 @@
 export class Renderer {
   constructor() {
     this.handContainer = document.getElementById('player-hand-container');
+    this.trickMat = document.getElementById('trick-mat');
     this.suitSymbols = { HEARTS: '♥', DIAMONDS: '♦', CLUBS: '♣', SPADES: '♠' };
   }
 
@@ -32,6 +33,42 @@ export class Renderer {
       }
 
       this.handContainer.appendChild(cardEl);
+    });
+  }
+
+  renderTrick(currentTrick, localSeat) {
+    if (!this.trickMat) return;
+
+    this.trickMat.innerHTML = '';
+
+    const slotMap = localSeat === null || localSeat === undefined
+      ? { 0: 'bottom', 1: 'right', 2: 'top', 3: 'left' }
+      : {
+          [(localSeat + 0) % 4]: 'bottom',
+          [(localSeat + 1) % 4]: 'right',
+          [(localSeat + 2) % 4]: 'top',
+          [(localSeat + 3) % 4]: 'left'
+        };
+
+    const slotStyles = {
+      top: 'top-3 left-1/2 -translate-x-1/2',
+      right: 'right-3 top-1/2 -translate-y-1/2',
+      bottom: 'bottom-3 left-1/2 -translate-x-1/2',
+      left: 'left-3 top-1/2 -translate-y-1/2'
+    };
+
+    currentTrick.forEach((play) => {
+      const slot = slotMap[play.seat] || 'bottom';
+      const cardEl = document.createElement('div');
+      cardEl.className = `card-element absolute ${slotStyles[slot]} w-14 h-20 bg-white text-black rounded-md shadow-lg flex flex-col justify-between p-2 font-bold ${
+        play.card.suit === 'HEARTS' || play.card.suit === 'DIAMONDS' ? 'text-red-600' : 'text-gray-900'
+      }`;
+      cardEl.innerHTML = `
+        <div class="text-left text-xs">${play.card.rank}</div>
+        <div class="text-center text-lg">${this.suitSymbols[play.card.suit]}</div>
+        <div class="text-right text-xs">${play.card.rank}</div>
+      `;
+      this.trickMat.appendChild(cardEl);
     });
   }
 

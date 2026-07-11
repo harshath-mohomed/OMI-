@@ -1,12 +1,14 @@
 import { socketConnectionManager } from './socket.js';
 import { Renderer } from './renderer.js';
 import { AnimationEngine } from './animation.js';
+import { AudioManager } from './audio.js';
 
 class GameClient {
   constructor() {
     this.socket = socketConnectionManager.initialize();
     this.renderer = new Renderer();
     this.animation = new AnimationEngine();
+    AudioManager.init();
 
     this.localState = { seat: null, currentGameState: null };
 
@@ -43,6 +45,8 @@ class GameClient {
     const username = document.getElementById('input-username').value.trim();
 
     if (!username) return alert('NAME required');
+
+    AudioManager.startBGM();
 
     this.socket.emit('joinRoom', { username, roomCode, asSpectator: false });
   }
@@ -116,8 +120,35 @@ class GameClient {
     });
 
     this.socket.on('syncState', (state) => {
+      // 1. Capture the old state before we overwrite it
+      const previousState = this.localState.currentGameState;
+      
+      // 2. Overwrite with the fresh incoming state
       this.localState.currentGameState = state;
 
+      // 3. Audio Delta Tracking Engine
+      if (previousState) {
+        const oldTrick = previousState.currentTrick || [];
+        const newTrick = state.currentTrick || [];
+
+        // A card was thrown onto the table
+        if (newTrick.length > oldTrick.length) {
+          AudioManager.playSFX('cardPlay');
+        }
+
+        // The 4th card was played and the server cleared the table
+        if (oldTrick.length === 4 && newTrick.length === 0) {
+          AudioManager.playSFX('trickWin');
+        }
+
+        // The game transition hits the terminal state match end phase
+        if (previousState.phase !== 'MATCH_END' && state.phase === 'MATCH_END') {
+          AudioManager.stopBGM();
+          AudioManager.playSFX('victory');
+        }
+      }
+
+      // 4. Continue with your standard UI mapping properties
       const playerList = state.players || [];
       const identity = playerList.find(p => p.id === this.socket.id || p.username === document.getElementById('input-username').value.trim());
 

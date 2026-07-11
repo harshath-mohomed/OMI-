@@ -20,6 +20,7 @@ export class MatchManager {
     this.dealer = new Dealer();
     this.scoreManager = new ScoreManager();
     this.roundManager = new RoundManager(this.players, this.scoreManager);
+    this.isResolvingTrick = false;
   }
 
   initializeMatch() {
@@ -118,6 +119,10 @@ export class MatchManager {
    */
   handleCardPlay(playerId, cardId) {
     if (this.phase !== CONFIG.GAME_PHASES.PLAYING) throw new Error('Illegal card play context.');
+    if (this.isResolvingTrick) {
+      this.emitCallback('MOVE_REJECTED', { playerId, reason: 'Wait for current trick to resolve.' });
+      return;
+    }
 
     const player = this.players.find(p => p.id === playerId);
     if (!player) throw new Error('Unknown player.');
@@ -132,20 +137,28 @@ export class MatchManager {
     }
 
     player.playCard(cardId);
+    const isTrickComplete = this.roundManager.executePlay(player, targetCard);
+    
     this.emitCallback('CARD_VALIDATED', { playerId, seat: player.seat, card: targetCard });
 
-    const result = this.roundManager.executePlay(player, targetCard);
+    if (isTrickComplete) {
+      this.isResolvingTrick = true;
+      setTimeout(() => {
+        const result = this.roundManager.resolveTrick();
+        this.emitCallback('TRICK_RESOLVED', result.trickResult);
 
-    if (result.isTrickComplete) {
-      this.emitCallback('TRICK_RESOLVED', result.trickResult);
+        if (result.isHandComplete) {
+          this.isResolvingTrick = false;
+          this.transitionTo(CONFIG.GAME_PHASES.HAND_END);
+          return;
+        }
+
+        this.isResolvingTrick = false;
+        this.notifyActiveTurn();
+      }, 1500);
+    } else {
+      this.notifyActiveTurn();
     }
-
-    if (result.isHandComplete) {
-      this.transitionTo(CONFIG.GAME_PHASES.HAND_END);
-      return;
-    }
-
-    this.notifyActiveTurn();
   }
 
   finishHand() {

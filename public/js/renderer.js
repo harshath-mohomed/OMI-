@@ -96,6 +96,16 @@ export class Renderer {
 
     this.setElementText('lobby-room-code', state.roomCode ? `ROOM ${state.roomCode}` : 'ROOM ----');
 
+    const countdownEl = document.getElementById('lobby-countdown');
+    if (countdownEl) {
+      if (typeof state.lobbyCountdown === 'number') {
+        countdownEl.innerText = `MATCH STARTS IN ${state.lobbyCountdown}...`;
+        countdownEl.classList.remove('hidden');
+      } else {
+        countdownEl.classList.add('hidden');
+      }
+    }
+
     if (localPlayer) {
       const motoNames = {
         'ceaser': 'Ceaser',

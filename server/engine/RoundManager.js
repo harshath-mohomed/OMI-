@@ -55,33 +55,33 @@ export class RoundManager {
     this.currentTrick.push({ player, card });
     
     const isTrickComplete = this.currentTrick.length === 4;
-    let trickResult = null;
-    let isHandComplete = false;
-
-    if (isTrickComplete) {
-      const winner = TrickResolver.resolveTrick(this.currentTrick, this.trumpSuit);
-      this.scoreManager.incrementTrick(winner.team, winner.seat);
-      this.tricksPlayed++;
-      
-      trickResult = {
-        winnerId: winner.id,
-        winnerSeat: winner.seat,
-        winningTeam: winner.team,
-        completedTrick: [...this.currentTrick]
-      };
-
-      this.currentTrick = [];
-      this.leadSuit = null;
-      this.activeTurnSeat = winner.seat;
-      isHandComplete = this.tricksPlayed >= CONFIG.TRICKS_PER_HAND;
-    } else {
+    if (!isTrickComplete) {
       this.activeTurnSeat = (this.activeTurnSeat + 3) % 4;
     }
 
+    return isTrickComplete;
+  }
+
+  resolveTrick() {
+    const winner = TrickResolver.resolveTrick(this.currentTrick, this.trumpSuit);
+    this.scoreManager.incrementTrick(winner.team, winner.seat);
+    this.tricksPlayed++;
+    
+    const trickResult = {
+      winnerId: winner.id,
+      winnerSeat: winner.seat,
+      winningTeam: winner.team,
+      completedTrick: [...this.currentTrick]
+    };
+
+    this.currentTrick = [];
+    this.leadSuit = null;
+    this.activeTurnSeat = winner.seat;
+    const isHandComplete = this.tricksPlayed >= CONFIG.TRICKS_PER_HAND;
+
     return {
-      isTrickComplete,
-      isHandComplete,
       trickResult,
+      isHandComplete,
       nextTurnSeat: this.activeTurnSeat
     };
   }

@@ -16,6 +16,8 @@ export class Room {
     this.connections = new Map();
     /** @type {MatchManager|null} */
     this.matchManager = null;
+    this.lobbyCountdown = null;
+    this.countdownInterval = null;
   }
 
   /**
@@ -55,6 +57,7 @@ export class Room {
     if (pIdx !== -1) {
       this.players[pIdx].isDisconnected = true;
       this.connections.delete(this.players[pIdx].id);
+      this.stopLobbyCountdown();
       return { role: 'PLAYER', player: this.players[pIdx] };
     }
 
@@ -70,6 +73,8 @@ export class Room {
   startMatch(ioNamespace) {
     if (this.players.length !== 4) throw new Error('Requires exactly 4 players to start.');
 
+    this.stopLobbyCountdown();
+
     this.matchManager = new MatchManager(this.code, this.players, (evt, data) => {
       ioNamespace.to(this.code).emit(evt, data);
       this.handleStatePersistIntercept(evt, data);
@@ -77,6 +82,42 @@ export class Room {
     });
 
     this.matchManager.initializeMatch();
+  }
+
+  startLobbyCountdown(ioNamespace) {
+    if (this.countdownInterval) return;
+    this.lobbyCountdown = 10;
+    this.broadcastGameState();
+
+    this.countdownInterval = setInterval(() => {
+      const activePlayers = this.players.filter(p => !p.isDisconnected);
+      if (this.players.length < 4 || activePlayers.length < 4) {
+        this.stopLobbyCountdown();
+        this.broadcastGameState();
+        return;
+      }
+
+      this.lobbyCountdown -= 1;
+
+      if (this.lobbyCountdown <= 0) {
+        this.stopLobbyCountdown();
+        try {
+          this.startMatch(ioNamespace);
+        } catch (err) {
+          console.error('Error starting match from countdown:', err);
+        }
+      } else {
+        this.broadcastGameState();
+      }
+    }, 1000);
+  }
+
+  stopLobbyCountdown() {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+    }
+    this.lobbyCountdown = null;
   }
 
   broadcastGameState() {
@@ -120,7 +161,8 @@ export class Room {
       roomCode: this.code,
       players: this.players.map(p => p.toJSON()),
       spectatorCount: this.spectators.length,
-      yourHand: playerInstance ? playerInstance.hand.map(c => c.toJSON()) : []
+      yourHand: playerInstance ? playerInstance.hand.map(c => c.toJSON()) : [],
+      lobbyCountdown: this.lobbyCountdown
     };
 
     // If no match is running yet, return just the base lobby info safely

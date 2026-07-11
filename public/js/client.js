@@ -270,9 +270,7 @@ class GameClient {
         trumpModal.classList.add('hidden');
       }
 
-      if (state.phase === 'LOBBY' && playerList.length === 4 && this.localState.seat === 0) {
-        this.socket.emit('startMatch');
-      }
+      // Removed auto startMatch emission as match start is now countdown-driven from the server
     });
   }
 }

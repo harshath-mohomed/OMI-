@@ -6,11 +6,17 @@
     <title>OMI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             color-scheme: dark;
+            --white: #ffffff;
+            --red: #ff0a0a;
+            --cyan: #00f7ff;
+            --teal: #03fff0;
+            --bg-dark: rgba(0,0,0,0.75);
+            --card-bg: rgba(15,15,15,0.85);
         }
 
         html, body {
@@ -675,7 +681,301 @@
             .opponent-diamond { width: 80px; height: 80px; }
             .hand-slot { width: 56px; height: 84px; }
             #player-hand-container { gap: 4px; }
+            .me-container { flex-direction: column; width: 95%; overflow-y: auto; max-height: 80vh; }
+            .me-right-panel { flex: none; }
         }
+
+        /* Match End Screen */
+        .match-end-screen {
+            background: var(--bg-dark);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+        }
+
+        .me-container {
+            display: flex;
+            gap: 24px;
+            max-width: 900px;
+            width: 90%;
+            margin-bottom: 30px;
+        }
+
+        .me-left-panel {
+            flex: 2;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .me-right-panel {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--cyan);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Shimmer sweep animation */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) skewX(-15deg); }
+            100% { transform: translateX(200%) skewX(-15deg); }
+        }
+        .me-right-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(0, 247, 255, 0.15), transparent);
+            transform: translateX(-100%) skewX(-15deg);
+            animation: shimmer 2s 1;
+        }
+
+        .me-title {
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 0.15em;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+
+        .me-teams-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            flex-grow: 1;
+        }
+
+        .me-team-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .me-team-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--cyan);
+            text-transform: uppercase;
+        }
+
+        .me-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+        
+        .me-muted {
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .me-player-name {
+            font-weight: bold;
+        }
+        .me-player-name.is-mvp {
+            color: var(--cyan);
+        }
+
+        .me-kapothi {
+            color: var(--red);
+            font-weight: bold;
+        }
+
+        .me-center-divider {
+            width: 1px;
+            background: rgba(255,255,255,0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .me-center-stat {
+            background: var(--card-bg);
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .me-bottom-bar {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .me-rounds-win {
+            text-align: center;
+        }
+        
+        .me-rounds-win-val.winner {
+            color: var(--teal);
+        }
+        .me-rounds-win-val.loser {
+            color: var(--red);
+        }
+
+        .me-winner-badge {
+            background: var(--white);
+            color: #000;
+            padding: 6px 16px;
+            border-radius: 99px;
+            font-weight: bold;
+            display: flex;
+            gap: 8px;
+            box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
+            animation: pulseGlow 2s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            from { box-shadow: 0 0 5px rgba(0, 247, 255, 0.2); border: 1px solid transparent; }
+            to { box-shadow: 0 0 20px rgba(0, 247, 255, 0.6); border: 1px solid var(--cyan); }
+        }
+
+        /* MVP Panel */
+        .me-mvp-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 72px;
+            color: var(--white);
+            line-height: 1;
+            margin-bottom: 16px;
+        }
+
+        .me-mvp-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #2b2b2b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--cyan);
+            margin-bottom: 12px;
+        }
+        .me-mvp-avatar img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .me-mvp-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .me-mvp-motto {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+            margin-bottom: 24px;
+        }
+
+        .me-mvp-divider {
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .me-mvp-stats {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: left;
+        }
+        .me-mvp-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+        .me-mvp-stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--teal);
+            letter-spacing: 0.1em;
+        }
+        .me-mvp-stat-val-main {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--white);
+            line-height: 1;
+        }
+        
+        .me-btn-group {
+            display: flex;
+            gap: 16px;
+        }
+
+        .me-btn {
+            border-radius: 9999px;
+            height: 52px;
+            min-width: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 150ms ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .me-btn:hover {
+            filter: brightness(1.15);
+            transform: scale(1.03);
+        }
+
+        .me-btn-rematch {
+            background: var(--cyan);
+            color: #000;
+            border: none;
+        }
+
+        .me-btn-home {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--white);
+            color: var(--white);
+        }
+
+        /* Animations */
+        @keyframes fadeInSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-slide-up {
+            animation: fadeInSlideUp 400ms ease-out forwards;
+        }
+        
+        @keyframes flashRed {
+            0% { color: var(--red); }
+            50% { color: #fff; text-shadow: 0 0 10px var(--red); }
+            100% { color: var(--red); }
+        }
+        .flash-red {
+            animation: flashRed 0.6s ease-out;
+        }
+
     </style>
 </head>
 <body>
@@ -820,6 +1120,97 @@
                 <button data-suit="CLUBS" class="trump-suit-btn bg-gray-700 text-white">♣ Clubs</button>
                 <button data-suit="SPADES" class="trump-suit-btn bg-black text-white">♠ Spades</button>
             </div>
+        </div>
+    </div>
+
+    <div id="match-end-screen" class="hidden screen match-end-screen fixed inset-0 flex-col items-center justify-center">
+        <div class="me-container fade-in-slide-up">
+            <!-- Left Panel -->
+            <div class="me-left-panel">
+                <div class="me-title">MATCH END</div>
+                
+                <div class="me-teams-grid">
+                    <!-- Team A -->
+                    <div class="me-team-col">
+                        <div id="me-team-a-name" class="me-team-name">TEAM BLACK</div>
+                        <div class="me-row"><span class="me-muted">tricks</span><span id="me-team-a-tricks">0 / 0</span></div>
+                        <div class="me-row"><span id="me-p0-name" class="me-player-name">Player 1</span><span id="me-p0-tricks">0 / 0</span></div>
+                        <div class="me-row"><span id="me-p2-name" class="me-player-name">Player 2</span><span id="me-p2-tricks">0 / 0</span></div>
+                        <div class="me-row"><span class="me-muted">KAPOTHI</span><span id="me-team-a-kapothi" class="me-kapothi">0</span></div>
+                    </div>
+
+                    <!-- Center Divider -->
+                    <div class="me-center-divider">
+                        <div class="me-center-stat">
+                            <div class="me-muted">TOTAL</div>
+                            <div class="me-muted">KAPOTHI</div>
+                            <div id="me-total-kapothi">0</div>
+                        </div>
+                        <div class="me-center-stat">
+                            <div class="me-muted">DRAWS</div>
+                            <div id="me-total-draws">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Team B -->
+                    <div class="me-team-col">
+                        <div id="me-team-b-name" class="me-team-name">TEAM RED</div>
+                        <div class="me-row"><span class="me-muted">tricks</span><span id="me-team-b-tricks">0 / 0</span></div>
+                        <div class="me-row"><span id="me-p1-name" class="me-player-name">Player 1</span><span id="me-p1-tricks">0 / 0</span></div>
+                        <div class="me-row"><span id="me-p3-name" class="me-player-name">Player 2</span><span id="me-p3-tricks">0 / 0</span></div>
+                        <div class="me-row"><span class="me-muted">KAPOTHI</span><span id="me-team-b-kapothi" class="me-kapothi">0</span></div>
+                    </div>
+                </div>
+
+                <!-- Bottom Bar -->
+                <div class="me-bottom-bar">
+                    <div class="me-rounds-win">
+                        <div class="me-muted">ROUNDS WIN</div>
+                        <div id="me-team-a-rounds" class="text-xl font-bold me-rounds-win-val">0 / 0</div>
+                    </div>
+                    
+                    <div class="me-winner-badge">
+                        <span>WINNER:</span>
+                        <span id="me-winner-name" style="color: var(--cyan)">TEAM</span>
+                    </div>
+
+                    <div class="me-rounds-win">
+                        <div class="me-muted">ROUNDS WIN</div>
+                        <div id="me-team-b-rounds" class="text-xl font-bold me-rounds-win-val">0 / 0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel (MVP) -->
+            <div class="me-right-panel">
+                <div class="me-mvp-title">MVP</div>
+                <div class="me-mvp-avatar">
+                    <img id="me-mvp-icon" src="/src/icons/wolf-head.svg" alt="MVP Avatar">
+                </div>
+                <div id="me-mvp-name" class="me-mvp-name">Player Name</div>
+                <div class="me-mvp-motto">[MVP motto coming soon]</div>
+                
+                <div class="me-mvp-divider"></div>
+                
+                <div class="me-mvp-stats">
+                    <div class="me-mvp-stat-label">TOTAL TRICKS WIN</div>
+                    <div id="me-mvp-tricks" class="me-mvp-stat-val-main">0 / 0</div>
+                    
+                    <div class="me-mvp-stat-row mt-4">
+                        <span class="me-muted">total score win</span>
+                        <span id="me-mvp-score" class="font-bold">0 / 10</span>
+                    </div>
+                    <div class="me-mvp-stat-row">
+                        <span class="me-muted">kapothi</span>
+                        <span id="me-mvp-kapothi" class="me-kapothi">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="me-btn-group fade-in-slide-up">
+            <button id="btn-me-rematch" class="me-btn me-btn-rematch">REMATCH</button>
+            <button id="btn-me-home" class="me-btn me-btn-home">HOME</button>
         </div>
     </div>
 

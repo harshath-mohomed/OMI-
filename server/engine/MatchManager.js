@@ -165,9 +165,38 @@ export class MatchManager {
 
   finalizeMatchStats() {
     const finalWinner = this.scoreManager.checkMatchWinner();
+    const stats = this.scoreManager.getMatchEndStats();
+
+    let mvp = null;
+    let maxScore = -Infinity;
+
+    this.players.forEach(player => {
+      const team = player.team;
+      const tricksWon = stats.playerTricks[player.seat] || 0;
+      const roundsWon = stats.roundsWon[team] || 0;
+      const kapothiDealt = stats.playerKapothiDealt[player.seat] || 0;
+      const kapothiReceived = stats.playerKapothiReceived[player.seat] || 0;
+
+      const score = tricksWon * 3 + roundsWon * 2 + kapothiDealt * 1.5 - kapothiReceived;
+
+      if (score > maxScore) {
+        maxScore = score;
+        mvp = {
+          ...player.toJSON(),
+          tricks_won: tricksWon,
+          kapothi_dealt: kapothiDealt,
+          kapothi_received: kapothiReceived,
+          is_mvp: true,
+          score: score
+        };
+      }
+    });
+
     this.emitCallback('MATCH_COMPLETE_HERO', {
       winnerTeam: finalWinner,
-      scores: this.scoreManager.matchScores
+      scores: this.scoreManager.matchScores,
+      stats: stats,
+      mvp: mvp
     });
   }
 }

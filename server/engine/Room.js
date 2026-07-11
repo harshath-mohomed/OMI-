@@ -90,12 +90,26 @@ export class Room {
   /** Optional tracking hooking mechanics intercepts */
   handleStatePersistIntercept(evt, data) {
     if (evt === 'MATCH_COMPLETE_HERO') {
+      this.lastMatchEndData = data;
       this.matchRepo.saveMatchResult({
         roomCode: this.code,
         winnerTeam: data.winnerTeam,
         scoreA: data.scores.A,
         scoreB: data.scores.B
       }).catch(err => console.error('Failed storing telemetry values:', err));
+    }
+  }
+
+  handleRematch(ioNamespace) {
+    if (!this.matchManager || this.matchManager.phase !== 'MATCH_END') return;
+    this.matchManager = null;
+    this.broadcastGameState();
+  }
+
+  handleReturnHome(socketId) {
+    const cleanup = this.removeClient(socketId);
+    if (cleanup) {
+      this.broadcastGameState();
     }
   }
 
@@ -145,7 +159,8 @@ export class Room {
       currentTrick: this.matchManager.roundManager.currentTrick.map(t => ({
         seat: t.player.seat,
         card: t.card.toJSON()
-      }))
+      })),
+      matchEndData: this.matchManager.phase === 'MATCH_END' ? this.lastMatchEndData : null
     };
   }
 }

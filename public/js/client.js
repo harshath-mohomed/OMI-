@@ -20,6 +20,7 @@ class GameClient {
   showGameScreen() {
     document.getElementById('home-screen')?.classList.add('hidden');
     document.getElementById('lobby-screen')?.classList.add('hidden');
+    document.getElementById('match-end-screen')?.classList.add('hidden');
     document.getElementById('game-screen')?.classList.remove('hidden');
     document.querySelector('.landing-bg')?.classList.add('hidden');
     document.querySelector('.landing-overlay')?.classList.add('hidden');
@@ -29,6 +30,7 @@ class GameClient {
     document.getElementById('home-screen')?.classList.remove('hidden');
     document.getElementById('lobby-screen')?.classList.add('hidden');
     document.getElementById('game-screen')?.classList.add('hidden');
+    document.getElementById('match-end-screen')?.classList.add('hidden');
     document.querySelector('.landing-bg')?.classList.remove('hidden');
     document.querySelector('.landing-overlay')?.classList.remove('hidden');
   }
@@ -37,8 +39,19 @@ class GameClient {
     document.getElementById('home-screen')?.classList.add('hidden');
     document.getElementById('lobby-screen')?.classList.remove('hidden');
     document.getElementById('game-screen')?.classList.add('hidden');
+    document.getElementById('match-end-screen')?.classList.add('hidden');
     document.querySelector('.landing-bg')?.classList.remove('hidden');
     document.querySelector('.landing-overlay')?.classList.remove('hidden');
+  }
+
+  showMatchEndScreen() {
+    document.getElementById('home-screen')?.classList.add('hidden');
+    document.getElementById('lobby-screen')?.classList.add('hidden');
+    document.getElementById('game-screen')?.classList.add('hidden');
+    document.getElementById('match-end-screen')?.classList.remove('hidden');
+    document.getElementById('match-end-screen')?.classList.add('flex');
+    document.querySelector('.landing-bg')?.classList.add('hidden');
+    document.querySelector('.landing-overlay')?.classList.add('hidden');
   }
 
   joinRoom(roomCode) {
@@ -97,6 +110,15 @@ class GameClient {
         chatInput.value = '';
       });
     }
+
+    document.getElementById('btn-me-rematch')?.addEventListener('click', () => {
+      this.socket.emit('rematch');
+    });
+
+    document.getElementById('btn-me-home')?.addEventListener('click', () => {
+      this.socket.emit('returnHome');
+      this.showHomeScreen();
+    });
   }
 
   appendChatMessage({ senderId, text, timestamp }) {
@@ -157,6 +179,9 @@ class GameClient {
       if (state.phase === 'LOBBY') {
         this.showLobbyScreen();
         this.renderer.renderLobby(state);
+      } else if (state.phase === 'MATCH_END') {
+        this.showMatchEndScreen();
+        this.renderer.renderMatchEnd(state, this.localState.seat);
       } else {
         this.showGameScreen();
       }

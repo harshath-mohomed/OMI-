@@ -21,5 +21,7 @@ export const EVENTS = {
   PLAYER_RECONNECTED: 'playerReconnected',
   SPECTATOR_JOINED: 'spectatorJoined',
   ROOM_CLOSED: 'roomClosed',
-  SYNC_STATE: 'syncState'
+  SYNC_STATE: 'syncState',
+  REMATCH: 'rematch',
+  RETURN_HOME: 'returnHome'
 };

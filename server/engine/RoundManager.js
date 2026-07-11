@@ -60,7 +60,7 @@ export class RoundManager {
 
     if (isTrickComplete) {
       const winner = TrickResolver.resolveTrick(this.currentTrick, this.trumpSuit);
-      this.scoreManager.incrementTrick(winner.team);
+      this.scoreManager.incrementTrick(winner.team, winner.seat);
       this.tricksPlayed++;
       
       trickResult = {

@@ -687,7 +687,7 @@
 
         /* Match End Screen */
         .match-end-screen {
-            background: var(--bg-dark);
+            background: linear-gradient(var(--bg-dark), var(--bg-dark)), url('/src/old_bar_table.jpeg') center/cover no-repeat;
             backdrop-filter: blur(12px);
             z-index: 100;
         }
@@ -806,11 +806,18 @@
 
         .me-center-stat {
             background: var(--card-bg);
-            padding: 4px 8px;
+            padding: 8px 16px;
             border-radius: 8px;
             border: 1px solid rgba(255,255,255,0.1);
             text-align: center;
             font-size: 12px;
+        }
+
+        .me-totals-container {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
         }
 
         .me-bottom-bar {
@@ -1140,17 +1147,7 @@
                     </div>
 
                     <!-- Center Divider -->
-                    <div class="me-center-divider">
-                        <div class="me-center-stat">
-                            <div class="me-muted">TOTAL</div>
-                            <div class="me-muted">KAPOTHI</div>
-                            <div id="me-total-kapothi">0</div>
-                        </div>
-                        <div class="me-center-stat">
-                            <div class="me-muted">DRAWS</div>
-                            <div id="me-total-draws">0</div>
-                        </div>
-                    </div>
+                    <div class="me-center-divider"></div>
 
                     <!-- Team B -->
                     <div class="me-team-col">
@@ -1159,6 +1156,19 @@
                         <div class="me-row"><span id="me-p1-name" class="me-player-name">Player 1</span><span id="me-p1-tricks">0 / 0</span></div>
                         <div class="me-row"><span id="me-p3-name" class="me-player-name">Player 2</span><span id="me-p3-tricks">0 / 0</span></div>
                         <div class="me-row"><span class="me-muted">KAPOTHI</span><span id="me-team-b-kapothi" class="me-kapothi">0</span></div>
+                    </div>
+                </div>
+
+                <!-- Totals Area -->
+                <div class="me-totals-container">
+                    <div class="me-center-stat">
+                        <div class="me-muted">TOTAL</div>
+                        <div class="me-muted">KAPOTHI</div>
+                        <div id="me-total-kapothi" class="text-lg font-bold">0</div>
+                    </div>
+                    <div class="me-center-stat">
+                        <div class="me-muted">DRAWS</div>
+                        <div id="me-total-draws" class="text-lg font-bold">0</div>
                     </div>
                 </div>
 

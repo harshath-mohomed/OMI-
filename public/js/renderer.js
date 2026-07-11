@@ -144,6 +144,13 @@ export class Renderer {
     this.setElementText('display-phase', state.phase || 'LOBBY');
     this.setElementText('score-team-a', matchScores.A ?? 10);
     this.setElementText('score-team-b', matchScores.B ?? 10);
+
+//     const roundsWonCount = localTeam
+//   ? Math.max(0, 10 - (matchScores[localTeam === 'A' ? 'B' : 'A'] ?? 10))
+//   : Math.max(0, 10 - Math.min(matchScores.A ?? 10, matchScores.B ?? 10));
+
+// this.setElementText('total-rounds-win', `${roundsWonCount}/10`);
+
     this.setElementText('team-a-label', this.formatTeamLabel(players, [0, 2], 'Team Black'));
     this.setElementText('team-b-label', this.formatTeamLabel(players, [1, 3], 'Team Red'));
 

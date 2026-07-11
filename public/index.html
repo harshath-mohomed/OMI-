@@ -1199,22 +1199,57 @@
                 <div id="display-trump" class="trump-value">—</div>
             </div>
 
-            <aside class="scoreboard-panel frosted-panel" aria-label="Scoreboard">
-                <div class="scoreboard-total">
-                    <span>Total Rounds Win</span>
-                    <span id="total-rounds-win">0/10</span>
+            <aside class="scoreboard-panel frosted-panel flex flex-col gap-3" aria-label="Scoreboard">
+                <!-- Header row — full width, centered -->
+                <div class="text-center">
+                    <div class="text-[0.62rem] font-bold tracking-wider uppercase text-gray-400">TOTAL ROUNDS WIN</div>
+                    <div class="flex justify-center items-center gap-3 mt-1 text-base font-bold">
+                        <span id="rounds-won-black" class="text-right w-12 text-white">0</span>
+                        <span class="text-gray-600 font-normal text-xs">|</span>
+                        <span id="rounds-won-red" class="text-left w-12 text-white">0</span>
+                    </div>
                 </div>
-                <div class="scoreboard-divider-h" aria-hidden="true"></div>
-                <div class="scoreboard-columns">
-                    <div class="scoreboard-team-col">
-                        <div class="scoreboard-col-label">Black</div>
-                        <div id="score-tricks-black" class="scoreboard-tricks">0 / 8</div>
+
+                <div class="scoreboard-divider-h" style="height: 1px; background: rgba(255, 255, 255, 0.15); margin: 2px 0;" aria-hidden="true"></div>
+
+                <!-- Score row — two columns split by vertical divider -->
+                <div class="grid grid-cols-3 items-center text-center">
+                    <!-- Left side -->
+                    <div>
+                        <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">score</div>
+                        <div class="text-sm font-bold text-white mt-0.5"><span id="score-team-a">10</span> / 10</div>
                     </div>
-                    <div class="scoreboard-col-mid">trick wins</div>
-                    <div class="scoreboard-team-col">
-                        <div class="scoreboard-col-label">Red</div>
-                        <div id="score-tricks-red" class="scoreboard-tricks">0 / 8</div>
+                    <!-- Center (scoreboard-mid) -->
+                    <div class="flex flex-col items-center">
+                        <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">SCORE</div>
+                        <div class="text-gray-600 font-normal text-xs mt-0.5">|</div>
                     </div>
+                    <!-- Right side -->
+                    <div>
+                        <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">score</div>
+                        <div class="text-sm font-bold text-white mt-0.5"><span id="score-team-b">10</span> / 10</div>
+                    </div>
+                </div>
+
+                <div class="scoreboard-divider-h" style="height: 1px; background: rgba(255, 255, 255, 0.15); margin: 2px 0;" aria-hidden="true"></div>
+
+                <!-- Team label and Trick wins rows -->
+                <div class="grid grid-cols-3 items-center text-center">
+                    <!-- Team Label Left -->
+                    <div class="font-bold text-xs text-white tracking-widest">BLACK</div>
+                    <!-- Team Label Center -->
+                    <div class="text-[0.58rem] uppercase tracking-wider text-gray-500 whitespace-nowrap">trick wins</div>
+                    <!-- Team Label Right -->
+                    <div class="font-bold text-xs text-red-600 tracking-widest">RED</div>
+                </div>
+
+                <div class="grid grid-cols-3 items-center text-center mt-0.5">
+                    <!-- Trick Wins Left -->
+                    <div id="score-tricks-black" class="text-sm font-bold text-white">0 / 8</div>
+                    <!-- Trick Wins Center -->
+                    <div class="text-gray-600 font-normal text-xs">|</div>
+                    <!-- Trick Wins Right -->
+                    <div id="score-tricks-red" class="text-sm font-bold text-white">0 / 8</div>
                 </div>
             </aside>
 
@@ -1244,8 +1279,6 @@
         <span id="display-phase" class="hidden">Lobby</span>
         <span id="display-room" class="hidden">Waiting...</span>
         <span id="display-connection-url" class="hidden">auto</span>
-        <span id="score-team-a" class="hidden">10</span>
-        <span id="score-team-b" class="hidden">10</span>
         <span id="team-a-label" class="hidden">Team A</span>
         <span id="team-b-label" class="hidden">Team B</span>
     </div>

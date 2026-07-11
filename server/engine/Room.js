@@ -178,6 +178,7 @@ export class Room {
         matchScores: { A: 10, B: 10 },
         scoringTokens: { A: 10, B: 10 },
         roundTricks: { A: 0, B: 0 },
+        roundsWon: { A: 0, B: 0 },
         hangingBonus: 0,
         tricksPlayed: 0,
         currentTrick: []
@@ -196,6 +197,7 @@ export class Room {
       matchScores: this.matchManager.scoreManager.matchScores,
       scoringTokens: this.matchManager.scoreManager.matchScores,
       roundTricks: this.matchManager.scoreManager.roundTricks,
+      roundsWon: this.matchManager.scoreManager.matchStats.roundsWon,
       hangingBonus: this.matchManager.scoreManager.hangingBonus,
       tricksPlayed: this.matchManager.roundManager.tricksPlayed,
       currentTrick: this.matchManager.roundManager.currentTrick.map(t => ({

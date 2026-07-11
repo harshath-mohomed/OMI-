@@ -117,6 +117,10 @@ class GameClient {
       this.openMotoModal();
     });
 
+    document.getElementById('lobby-moto-icon')?.addEventListener('click', () => {
+      this.openMotoModal();
+    });
+
     document.getElementById('btn-close-moto')?.addEventListener('click', () => {
       this.closeMotoModal();
     });

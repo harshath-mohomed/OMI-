@@ -167,6 +167,58 @@
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
         }
 
+        .lobby-moto-panel {
+            max-width: 420px;
+            margin: 30px auto 0;
+            padding: 16px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+        }
+
+        .lobby-moto-label {
+            text-transform: uppercase;
+            letter-spacing: 0.24em;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.52);
+            text-align: center;
+        }
+
+        .lobby-moto-preview {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        .lobby-moto-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .lobby-moto-meta {
+            min-width: 0;
+        }
+
+        .lobby-moto-name {
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .lobby-moto-hint {
+            margin-top: 4px;
+            font-size: 0.76rem;
+            color: rgba(255, 255, 255, 0.56);
+        }
+
         .room-code-badge {
             position: absolute;
             top: 18px;
@@ -829,6 +881,60 @@
             align-items: center;
         }
 
+        /* Moto Modal */
+        .moto-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .moto-tile {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .moto-tile:hover {
+            transform: scale(1.05);
+            border-color: var(--cyan);
+            box-shadow: 0 0 10px rgba(0, 247, 255, 0.5);
+        }
+
+        .moto-tile img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .avatar-icon {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background-color: #2b2b2b;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar-icon img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        #seat-bottom .avatar-icon { top: -20px; left: -60px; }
+        #seat-top .avatar-icon { top: -20px; right: -60px; left: auto; }
+        #seat-left .avatar-icon { top: -60px; left: 16px; }
+        #seat-right .avatar-icon { top: -60px; right: 16px; left: auto; }
+
         .me-rounds-win {
             text-align: center;
         }
@@ -1046,6 +1152,21 @@
                     </div>
                 </section>
             </div>
+
+            <div class="lobby-moto-panel" aria-label="Selected moto">
+                <div class="lobby-moto-label">selected moto</div>
+                <div class="lobby-moto-preview">
+                    <img id="lobby-moto-icon" class="lobby-moto-icon" src="/src/icons/wolf-head.svg" alt="">
+                    <div class="lobby-moto-meta">
+                        <p id="lobby-moto-name" class="lobby-moto-name">Wolf Head</p>
+                        <div class="lobby-moto-hint">Change it before the match starts.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: center; margin-top: 32px;">
+                <button id="btn-open-moto" class="play-action" style="font-size: 16px; padding: 12px 32px; background: var(--card-bg); border: 1px solid var(--cyan); color: var(--cyan);">EDIT MOTO</button>
+            </div>
         </div>
     </div>
 
@@ -1094,14 +1215,19 @@
             <div id="board-container">
                 <div id="seat-left" class="opponent-diamond opponent-left" data-seat="1">
                     <span class="seat-label">opponent player</span>
+                    <div class="avatar-icon hidden"><img src="/src/icons/wolf-head.svg" alt=""></div>
                 </div>
                 <div id="seat-right" class="opponent-diamond opponent-right" data-seat="3">
                     <span class="seat-label">opponent player</span>
+                    <div class="avatar-icon hidden"><img src="/src/icons/wolf-head.svg" alt=""></div>
                 </div>
                 <div id="seat-top" class="teammate-slot" data-seat="2">
                     <span class="seat-label">my team mate</span>
+                    <div class="avatar-icon hidden"><img src="/src/icons/wolf-head.svg" alt=""></div>
                 </div>
-                <div id="seat-bottom" data-seat="0"></div>
+                <div id="seat-bottom" data-seat="0">
+                    <div class="avatar-icon hidden"><img src="/src/icons/wolf-head.svg" alt=""></div>
+                </div>
 
                 <div id="trick-mat"></div>
             </div>
@@ -1127,6 +1253,27 @@
                 <button data-suit="CLUBS" class="trump-suit-btn bg-gray-700 text-white">♣ Clubs</button>
                 <button data-suit="SPADES" class="trump-suit-btn bg-black text-white">♠ Spades</button>
             </div>
+        </div>
+    </div>
+
+    <div id="moto-modal" class="hidden fixed inset-0 trump-modal-backdrop flex items-center justify-center z-50">
+        <div class="trump-modal-card text-center space-y-5">
+            <h2 id="moto-modal-title">Edit Moto</h2>
+            <div class="moto-grid">
+                <button class="moto-tile" data-moto="ceaser" data-icon="/src/icons/ceaser.svg" data-label="Ceaser" style="background-color: #e53e3e"><img src="/src/icons/ceaser.svg" alt=""></button>
+                <button class="moto-tile" data-moto="dagger-rose" data-icon="/src/icons/dagger-rose.svg" data-label="Dagger Rose" style="background-color: #d53f8c"><img src="/src/icons/dagger-rose.svg" alt=""></button>
+                <button class="moto-tile" data-moto="diamonds-smile" data-icon="/src/icons/diamonds-smile.svg" data-label="Diamonds Smile" style="background-color: #805ad5"><img src="/src/icons/diamonds-smile.svg" alt=""></button>
+                <button class="moto-tile" data-moto="greek-sphinx" data-icon="/src/icons/greek-sphinx.svg" data-label="Greek Sphinx" style="background-color: #3182ce"><img src="/src/icons/greek-sphinx.svg" alt=""></button>
+                <button class="moto-tile" data-moto="robe" data-icon="/src/icons/robe.svg" data-label="Robe" style="background-color: #38b2ac"><img src="/src/icons/robe.svg" alt=""></button>
+                <button class="moto-tile" data-moto="robot-golem" data-icon="/src/icons/robot-golem.svg" data-label="Robot Golem" style="background-color: #48bb78"><img src="/src/icons/robot-golem.svg" alt=""></button>
+                <button class="moto-tile" data-moto="rocket" data-icon="/src/icons/rocket.svg" data-label="Rocket" style="background-color: #ecc94b"><img src="/src/icons/rocket.svg" alt=""></button>
+                <button class="moto-tile" data-moto="rouge" data-icon="/src/icons/rouge.svg" data-label="Rouge" style="background-color: #ed8936"><img src="/src/icons/rouge.svg" alt=""></button>
+                <button class="moto-tile" data-moto="shambling-zombie" data-icon="/src/icons/shambling-zombie.svg" data-label="Shambling Zombie" style="background-color: #a0aec0"><img src="/src/icons/shambling-zombie.svg" alt=""></button>
+                <button class="moto-tile" data-moto="vampire-dracula" data-icon="/src/icons/vampire-dracula.svg" data-label="Vampire Dracula" style="background-color: #4a5568"><img src="/src/icons/vampire-dracula.svg" alt=""></button>
+                <button class="moto-tile" data-moto="winged-sword" data-icon="/src/icons/winged-sword.svg" data-label="Winged Sword" style="background-color: #2d3748"><img src="/src/icons/winged-sword.svg" alt=""></button>
+                <button class="moto-tile" data-moto="wolf-head" data-icon="/src/icons/wolf-head.svg" data-label="Wolf Head" style="background-color: #1a202c"><img src="/src/icons/wolf-head.svg" alt=""></button>
+            </div>
+            <button id="btn-close-moto" class="play-action mt-4" style="font-size: 14px; padding: 8px 16px; min-width: 120px;">CLOSE</button>
         </div>
     </div>
 

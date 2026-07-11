@@ -47,4 +47,21 @@ export function registerLobbyHandlers(io, socket, engine) {
       socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
     }
   });
+
+  socket.on(EVENTS.SELECT_MOTO, ({ motoId }) => {
+    const room = engine.getRoom(socket.data.roomCode);
+    if (!room) return;
+    
+    // Only allow selection before a match starts or after it finishes.
+    if (room.matchManager && room.matchManager.phase !== 'MATCH_END' && room.matchManager.phase !== 'LOBBY') {
+      socket.emit(EVENTS.ILLEGAL_MOVE, { reason: 'Cannot change Moto after match has started.' });
+      return;
+    }
+
+    const player = room.players.find(p => p.id === socket.data.playerId);
+    if (player) {
+      player.motoId = motoId;
+      room.broadcastGameState();
+    }
+  });
 }

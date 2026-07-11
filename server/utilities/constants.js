@@ -23,5 +23,6 @@ export const EVENTS = {
   ROOM_CLOSED: 'roomClosed',
   SYNC_STATE: 'syncState',
   REMATCH: 'rematch',
-  RETURN_HOME: 'returnHome'
+  RETURN_HOME: 'returnHome',
+  SELECT_MOTO: 'selectMoto'
 };

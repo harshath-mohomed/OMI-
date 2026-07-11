@@ -82,7 +82,7 @@ export class Renderer {
     });
   }
 
-  renderLobby(state) {
+  renderLobby(state, localPlayer) {
     const players = state.players || [];
     const seatLabels = [0, 2, 1, 3];
 
@@ -95,6 +95,31 @@ export class Renderer {
     });
 
     this.setElementText('lobby-room-code', state.roomCode ? `ROOM ${state.roomCode}` : 'ROOM ----');
+
+    if (localPlayer) {
+      const motoNames = {
+        'ceaser': 'Ceaser',
+        'dagger-rose': 'Dagger Rose',
+        'diamonds-smile': 'Diamonds Smile',
+        'greek-sphinx': 'Greek Sphinx',
+        'robe': 'Robe',
+        'robot-golem': 'Robot Golem',
+        'rocket': 'Rocket',
+        'rouge': 'Rouge',
+        'shambling-zombie': 'Shambling Zombie',
+        'vampire-dracula': 'Vampire Dracula',
+        'winged-sword': 'Winged Sword',
+        'wolf-head': 'Wolf Head'
+      };
+
+      const motoId = localPlayer.motoId || 'wolf-head';
+      this.setElementText('lobby-moto-name', motoNames[motoId] || 'Wolf Head');
+
+      const motoIcon = document.getElementById('lobby-moto-icon');
+      if (motoIcon) {
+        motoIcon.src = `/src/icons/${motoId}.svg`;
+      }
+    }
   }
 
   updateMetadata(state, localSeat) {

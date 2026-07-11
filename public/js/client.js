@@ -11,6 +11,20 @@ class GameClient {
     AudioManager.init();
 
     this.localState = { seat: null, currentGameState: null };
+    this.motoCatalog = {
+      'ceaser': { label: 'Ceaser', icon: '/src/icons/ceaser.svg' },
+      'dagger-rose': { label: 'Dagger Rose', icon: '/src/icons/dagger-rose.svg' },
+      'diamonds-smile': { label: 'Diamonds Smile', icon: '/src/icons/diamonds-smile.svg' },
+      'greek-sphinx': { label: 'Greek Sphinx', icon: '/src/icons/greek-sphinx.svg' },
+      'robe': { label: 'Robe', icon: '/src/icons/robe.svg' },
+      'robot-golem': { label: 'Robot Golem', icon: '/src/icons/robot-golem.svg' },
+      'rocket': { label: 'Rocket', icon: '/src/icons/rocket.svg' },
+      'rouge': { label: 'Rouge', icon: '/src/icons/rouge.svg' },
+      'shambling-zombie': { label: 'Shambling Zombie', icon: '/src/icons/shambling-zombie.svg' },
+      'vampire-dracula': { label: 'Vampire Dracula', icon: '/src/icons/vampire-dracula.svg' },
+      'winged-sword': { label: 'Winged Sword', icon: '/src/icons/winged-sword.svg' },
+      'wolf-head': { label: 'Wolf Head', icon: '/src/icons/wolf-head.svg' }
+    };
 
     this.bindDOMEvents();
     this.bindSocketEvents();
@@ -44,6 +58,35 @@ class GameClient {
     document.querySelector('.landing-overlay')?.classList.remove('hidden');
   }
 
+  openMotoModal() {
+    document.getElementById('moto-modal')?.classList.remove('hidden');
+  }
+
+  closeMotoModal() {
+    document.getElementById('moto-modal')?.classList.add('hidden');
+  }
+
+  selectMoto(motoId) {
+    if (!motoId) return;
+    this.socket.emit('selectMoto', { motoId });
+    this.closeMotoModal();
+  }
+
+  updateLobbyMotoPreview(player) {
+    const moto = player?.motoId ? this.motoCatalog[player.motoId] : null;
+    const iconEl = document.getElementById('lobby-moto-icon');
+    const nameEl = document.getElementById('lobby-moto-name');
+
+    if (iconEl) {
+      iconEl.src = moto?.icon || '/src/icons/wolf-head.svg';
+      iconEl.alt = moto ? moto.label : 'Default moto';
+    }
+
+    if (nameEl) {
+      nameEl.innerText = moto?.label || 'Wolf Head';
+    }
+  }
+
   showMatchEndScreen() {
     document.getElementById('home-screen')?.classList.add('hidden');
     document.getElementById('lobby-screen')?.classList.add('hidden');
@@ -68,6 +111,27 @@ class GameClient {
     document.getElementById('btn-home-play').addEventListener('click', () => {
       const roomCode = document.getElementById('input-room').value.trim().toUpperCase();
       this.joinRoom(roomCode);
+    });
+
+    document.getElementById('btn-open-moto')?.addEventListener('click', () => {
+      this.openMotoModal();
+    });
+
+    document.getElementById('btn-close-moto')?.addEventListener('click', () => {
+      this.closeMotoModal();
+    });
+
+    document.getElementById('moto-modal')?.addEventListener('click', (event) => {
+      if (event.target.id === 'moto-modal') {
+        this.closeMotoModal();
+      }
+    });
+
+    document.querySelectorAll('.moto-tile').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        const motoId = event.currentTarget.dataset.moto;
+        this.selectMoto(motoId);
+      });
     });
 
     document.getElementById('input-username').addEventListener('keydown', (event) => {
@@ -174,11 +238,15 @@ class GameClient {
       const playerList = state.players || [];
       const identity = playerList.find(p => p.id === this.socket.id || p.username === document.getElementById('input-username').value.trim());
 
-      if (identity) this.localState.seat = identity.seat;
+      if (identity) {
+        this.localState.seat = identity.seat;
+        this.localState.player = identity;
+      }
 
       if (state.phase === 'LOBBY') {
         this.showLobbyScreen();
-        this.renderer.renderLobby(state);
+        this.renderer.renderLobby(state, this.localState.player);
+        this.updateLobbyMotoPreview(this.localState.player);
       } else if (state.phase === 'MATCH_END') {
         this.showMatchEndScreen();
         this.renderer.renderMatchEnd(state, this.localState.seat);

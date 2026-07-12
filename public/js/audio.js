@@ -13,8 +13,10 @@ export const AudioManager = {
 
     // 2. Pre-cache Short Sound Effects (SFX) into memory buffers
     this.sounds.cardPlay = new Audio('/audio/card-slide.mp3');
-    this.sounds.trickWin = new Audio('/audio/trick-win.mp3');
+    this.sounds.trickWin = new Audio('/audio/trick-win-2.mp3');
     this.sounds.victory = new Audio('/audio/match-victory.mp3');
+    this.sounds.roundLoss = new Audio('/audio/round-lose.mp3');
+    this.sounds.matchLoss = new Audio('/audio/match-over.mp3');
 
     // Optimize SFX volume balances
     Object.values(this.sounds).forEach(sound => {

@@ -142,14 +142,17 @@ export class Renderer {
     this.setElementText('display-connection-url', window.location.origin);
     this.setElementText('display-room', state.roomCode || 'Waiting...');
     this.setElementText('display-phase', state.phase || 'LOBBY');
-    this.setElementText('score-team-a', matchScores.A ?? 10);
-    this.setElementText('score-team-b', matchScores.B ?? 10);
+    const roundsWon = state.roundsWon || { A: 0, B: 0 };
+    const tokensWonA = 10 - (matchScores.B ?? 10);
+    const tokensWonB = 10 - (matchScores.A ?? 10);
 
-//     const roundsWonCount = localTeam
-//   ? Math.max(0, 10 - (matchScores[localTeam === 'A' ? 'B' : 'A'] ?? 10))
-//   : Math.max(0, 10 - Math.min(matchScores.A ?? 10, matchScores.B ?? 10));
+    const tokensWonBlack = 10 - (matchScores.B ?? 10); // Black drained Red
+    const tokensWonRed   = 10 - (matchScores.A ?? 10); // Red drained Black
 
-// this.setElementText('total-rounds-win', `${roundsWonCount}/10`);
+    this.setElementText('score-team-a', `${tokensWonBlack} / ${matchScores.A ?? 10}`); // left panel
+    this.setElementText('score-team-b', `${tokensWonRed} / ${matchScores.B ?? 10}`);   // right panel
+    this.setElementText('rounds-won-black', roundsWon.A ?? 0);
+    this.setElementText('rounds-won-red', roundsWon.B ?? 0);
 
     this.setElementText('team-a-label', this.formatTeamLabel(players, [0, 2], 'Team Black'));
     this.setElementText('team-b-label', this.formatTeamLabel(players, [1, 3], 'Team Red'));
@@ -162,10 +165,8 @@ export class Renderer {
     this.setElementText('score-tricks-black', `${roundTricks.A ?? 0} / 8`);
     this.setElementText('score-tricks-red', `${roundTricks.B ?? 0} / 8`);
 
-    const roundsWon = localTeam
-      ? Math.max(0, 10 - (matchScores[localTeam === 'A' ? 'B' : 'A'] ?? 10))
-      : Math.max(0, 10 - Math.min(matchScores.A ?? 10, matchScores.B ?? 10));
-    this.setElementText('total-rounds-win', `${roundsWon}/10`);
+    const localRoundsWon = localTeam ? (roundsWon[localTeam] ?? 0) : (roundsWon.A ?? 0);
+    this.setElementText('total-rounds-win', `${localRoundsWon}/10`);
 
     this.updateTeamStatusBars(state.activeTurnSeat, players);
     this.updateSeatLabels(state, localSeatIndex);

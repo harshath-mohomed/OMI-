@@ -258,9 +258,9 @@ class GameClient {
 
           const finalScores = state.matchScores || { A: 10, B: 10 };
           
-          // In Omi, the first team to drop down to 0 points wins the whole game.
-          // Alternatively, if your server uses standard high-score tracking, change the '<' to '>'
-          const matchWinningTeam = finalScores.A < finalScores.B ? 'A' : 'B';
+          // Under countdown rules, the team that reaches 0 tokens loses,
+          // so the team with more tokens remaining wins the match.
+          const matchWinningTeam = finalScores.A > finalScores.B ? 'A' : 'B';
 
           if (myTeam === matchWinningTeam) {
             AudioManager.playSFX('victory');     // ◄ Overall Match Winner Fanfare

@@ -46,7 +46,7 @@ export class ScoreManager {
     const teamB = this.roundTricks.B;
 
     if (teamA === 4 && teamB === 4) {
-      this.hangingBonus = 1;
+      this.hangingBonus = 2; // 2 bonus tokens held in reserve
       this.matchStats.draws++;
       return {
         winningTeam: null,
@@ -54,7 +54,7 @@ export class ScoreManager {
         allocatedPoints: 0,
         isKaputhi: false,
         isHanging: true,
-        hangingBonusCarried: 1,
+        hangingBonusCarried: 2,
         currentMatchScores: { ...this.matchScores }
       };
     }
@@ -64,20 +64,25 @@ export class ScoreManager {
     const winTricks = this.roundTricks[winningTeam];
     const isKaputhi = winTricks === CONFIG.TRICKS_PER_HAND;
 
-    let basePoints = 0;
+    let points = 0;
+    const pendingBonus = this.hangingBonus > 0;
+
     if (isKaputhi) {
-      basePoints = 3;
-    } else if (winTricks >= CONFIG.TRICKS_TO_WIN_SCORE && winTricks <= 7) {
-      basePoints = winningTeam === trumpTeam ? 1 : 2;
+      points = 3;
+      this.hangingBonus = 0; // bonus is discarded on Kapothi win
+    } else {
+      if (pendingBonus) {
+        points = 2; // 2 tokens, bonus absorbed
+        this.hangingBonus = 0;
+      } else {
+        points = winningTeam === trumpTeam ? 1 : 2;
+      }
     }
 
-    const bonusPoints = this.hangingBonus;
-    const requestedPoints = basePoints + bonusPoints;
-    const allocatedPoints = Math.min(requestedPoints, this.matchScores[losingTeam]);
+    const allocatedPoints = Math.min(points, this.matchScores[losingTeam]);
 
-    this.matchScores[winningTeam] += allocatedPoints;
+    // Tokens are ONLY deducted from losing team, never added to winning team
     this.matchScores[losingTeam] -= allocatedPoints;
-    this.hangingBonus = 0;
     
     this.matchStats.roundsWon[winningTeam]++;
 
@@ -90,6 +95,10 @@ export class ScoreManager {
       winningSeats.forEach(seat => this.matchStats.playerKapothiDealt[seat]++);
       losingSeats.forEach(seat => this.matchStats.playerKapothiReceived[seat]++);
     }
+
+    // Calculate base and bonus points representation for reporting
+    const basePoints = isKaputhi ? 3 : (winningTeam === trumpTeam ? 1 : 2);
+    const bonusPoints = (pendingBonus && !isKaputhi && winningTeam === trumpTeam) ? 1 : 0;
 
     return {
       winningTeam,

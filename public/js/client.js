@@ -130,21 +130,53 @@ class GameClient {
       if (previousState) {
         const oldTrick = previousState.currentTrick || [];
         const newTrick = state.currentTrick || [];
+        const oldTricks = previousState.roundTricks || { A: 0, B: 0 };
+        const newTricks = state.roundTricks || { A: 0, B: 0 };
 
-        // A card was thrown onto the table
+        // Determine this local player's team based on their seat configuration
+        // Team A: Seats 0 & 2 | Team B: Seats 1 & 3
+        const mySeat = this.localState.seat;
+        const myTeam = (mySeat === 0 || mySeat === 2) ? 'A' : ((mySeat === 1 || mySeat === 3) ? 'B' : null);
+
+        // ─────────────── CARD / TRICK TRACKING ───────────────
+        // A card was thrown onto the table trick mat
         if (newTrick.length > oldTrick.length) {
           AudioManager.playSFX('cardPlay');
         }
 
-        // The 4th card was played and the server cleared the table
+        // The 4th card was played and the server cleared the table buffer
         if (oldTrick.length === 4 && newTrick.length === 0) {
           AudioManager.playSFX('trickWin');
         }
 
+        // ─────────────── ROUND WIN / LOSS TRACKING ───────────────
+        // A team reached exactly 5 tricks (Won the current round)
+        if ((oldTricks.A < 5 && newTricks.A === 5) || (oldTricks.B < 5 && newTricks.B === 5)) {
+          const winningTeam = newTricks.A === 5 ? 'A' : 'B';
+          
+          if (myTeam === winningTeam) {
+            AudioManager.playSFX('roundWin');
+          } else {
+            AudioManager.playSFX('roundLoss'); // ◄ Plays for the team that lost the round
+          }
+        }
+
+        // ─────────────── OVERALL MATCH WIN / LOSS TRACKING ───────────────
         // The game transition hits the terminal state match end phase
         if (previousState.phase !== 'MATCH_END' && state.phase === 'MATCH_END') {
           AudioManager.stopBGM();
-          AudioManager.playSFX('victory');
+
+          const finalScores = state.matchScores || { A: 10, B: 10 };
+          
+          // In Omi, the first team to drop down to 0 points wins the whole game.
+          // Alternatively, if your server uses standard high-score tracking, change the '<' to '>'
+          const matchWinningTeam = finalScores.A < finalScores.B ? 'A' : 'B';
+
+          if (myTeam === matchWinningTeam) {
+            AudioManager.playSFX('victory');     // ◄ Overall Match Winner Fanfare
+          } else {
+            AudioManager.playSFX('matchLoss');   // ◄ Overall Match Loser Audio Track
+          }
         }
       }
 

@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>OMI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1147,6 +1150,7 @@
         }
 
     </style>
+    <link rel="stylesheet" href="mobile.css">
 </head>
 <body>
 
@@ -1229,7 +1233,13 @@
         <div class="tavern-overlay" aria-hidden="true"></div>
 
         <div class="game-overlay">
-            <aside class="chat-panel frosted-panel" aria-label="Chat">
+            <div id="mobile-score-bar" class="hidden w-full flex justify-between items-center px-3 py-1 text-white bg-black/70 text-xs">
+                <span id="mobile-score-black">BLACK 0/10</span>
+                <span id="mobile-trump">—</span>
+                <span id="mobile-tricks">0/8</span>
+                <span id="mobile-score-red">RED 0/10</span>
+            </div>
+            <aside id="chat-panel" class="chat-panel frosted-panel" aria-label="Chat">
                 <div class="team-status-bars" aria-hidden="true">
                     <div id="status-bar-red" class="team-status-bar bar-red"></div>
                     <div id="status-bar-black" class="team-status-bar bar-black"></div>
@@ -1325,10 +1335,13 @@
                     <div class="avatar-icon hidden"><img src="/src/icons/wolf-head.svg" alt=""></div>
                 </div>
 
-                <div id="trick-mat"></div>
+                <div id="trick-mat-wrapper">
+                    <div id="trick-mat"></div>
+                </div>
             </div>
 
             <div id="player-hand-container"></div>
+            <button id="btn-chat-toggle" class="fixed bottom-4 right-4 z-50 w-11 h-11 rounded-full bg-gray-800 text-white text-xl md:hidden flex items-center justify-center">💬</button>
         </div>
 
         <span id="display-phase" class="hidden">Lobby</span>

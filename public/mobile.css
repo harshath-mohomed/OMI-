@@ -1,0 +1,318 @@
+/* Custom mobile responsive overrides for Omi card game */
+
+/* Safe Area Insets for notched and punch-hole devices */
+#game-screen,
+#lobby-screen,
+#match-end-screen,
+#home-screen {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* All phones — portrait and landscape */
+@media (max-width: 640px) {
+  /* Ensure full height is strictly locked to dynamic viewport height */
+  html, body, #game-screen, #lobby-screen, #match-end-screen {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+
+  body {
+    overflow: hidden;
+  }
+
+  /* Game Screen flex column layout */
+  .game-overlay {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100dvh !important;
+    width: 100% !important;
+    justify-content: space-between !important;
+    align-items: stretch !important;
+    position: relative !important;
+    padding: 0 !important;
+  }
+
+  /* Mobile score bar at the top */
+  #mobile-score-bar {
+    display: flex !important;
+    height: clamp(35px, 6vh, 48px);
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Hide desktop scoreboard panel and desktop selected trump panel */
+  .scoreboard-panel,
+  .trump-panel {
+    display: none !important;
+  }
+
+  /* Board container in middle flex */
+  #board-container {
+    position: relative !important;
+    flex: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+  }
+
+  /* Trick Mat and scaling container wrapper */
+  #trick-mat-wrapper {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(clamp(0.6, 35vw / 160px, 1));
+    transform-origin: center center !important;
+    pointer-events: none !important;
+  }
+
+  #trick-mat {
+    position: relative !important;
+    width: clamp(160px, 40vw, 320px) !important;
+    height: clamp(160px, 40vw, 320px) !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+  }
+
+  /* Opponent Seat Diamond Styles on mobile */
+  .opponent-diamond {
+    width: clamp(64px, 18vw, 84px) !important;
+    height: clamp(64px, 18vw, 84px) !important;
+  }
+
+  .opponent-diamond.opponent-left {
+    left: clamp(6px, 2vw, 20px) !important;
+    top: 50% !important;
+    transform: translateY(-50%) rotate(45deg) !important;
+  }
+
+  .opponent-diamond.opponent-right {
+    right: clamp(6px, 2vw, 20px) !important;
+    top: 50% !important;
+    transform: translateY(-50%) rotate(45deg) !important;
+  }
+
+  .teammate-slot {
+    width: clamp(64px, 18vw, 84px) !important;
+    height: clamp(64px, 18vw, 84px) !important;
+    top: clamp(6px, 2vh, 24px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .seat-label {
+    font-size: clamp(0.55rem, 2.5vw, 0.75rem) !important;
+    max-width: 90% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Player hand container at the bottom */
+  #player-hand-container {
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important; /* smooth scroll on iOS */
+    scrollbar-width: none !important;            /* hide scrollbar on Android Firefox */
+    padding: clamp(0.4rem, 2vh, 0.8rem) clamp(0.6rem, 3vw, 1.2rem) !important;
+    gap: clamp(0.15rem, 1vw, 0.35rem) !important;
+    min-height: clamp(90px, 15vh, 120px) !important;
+    align-items: flex-end !important;
+    box-sizing: border-box !important;
+  }
+
+  #player-hand-container::-webkit-scrollbar {
+    display: none !important; /* hide scrollbar on iOS Safari and Chrome Android */
+  }
+
+  /* Card Sizing clamp */
+  .card-element, .hand-slot {
+    width: clamp(2.2rem, 9vw, 3.2rem) !important;
+    height: clamp(3rem, 12.5vw, 4.5rem) !important;
+    font-size: clamp(0.55rem, 2vw, 0.875rem) !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Fallback text card adjustment to prevent overflow */
+  .hand-slot.filled:not(.asset-card) div.text-sm,
+  .trick-card:not(.asset-card) div.text-sm {
+    font-size: clamp(0.5rem, 1.8vw, 0.7rem) !important;
+    line-height: 1.1 !important;
+  }
+
+  .hand-slot.filled:not(.asset-card) div.text-2xl,
+  .trick-card:not(.asset-card) div.text-2xl {
+    font-size: clamp(0.9rem, 3vw, 1.2rem) !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Chat Bottom Sheet Drawer */
+  #chat-panel {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 50dvh !important;
+    transform: translateY(100%) !important;
+    transition: transform 0.25s ease !important;
+    z-index: 100 !important;
+    border-radius: 1rem 1rem 0 0 !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6) !important;
+    display: flex !important;
+  }
+
+  #chat-panel.open {
+    transform: translateY(0) !important;
+  }
+
+  .chat-messages {
+    flex: 1 !important;
+    max-height: none !important;
+  }
+
+  /* Trump Selection Modal */
+  #trump-modal .trump-modal-card {
+    width: 92vw !important;
+    padding: 1.25rem !important;
+  }
+
+  #trump-modal button {
+    width: 100% !important;
+    padding: 0.875rem !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  #trump-modal .flex.flex-wrap {
+    flex-direction: column !important;
+  }
+
+  /* Lobby Screen spacing and responsiveness */
+  #lobby-screen {
+    flex-direction: column !important;
+    padding: 1rem !important;
+    overflow-y: auto !important;
+  }
+
+  .lobby-shell {
+    width: 100% !important;
+    padding: clamp(16px, 4vw, 24px) !important;
+    border-radius: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  .team-panel {
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+  }
+
+  #btn-join-black,
+  #btn-join-red {
+    width: 100% !important;
+    padding: 0.875rem !important;
+  }
+
+  /* Match End Screen elements stacking and alignment */
+  #match-end-screen {
+    overflow-y: auto !important;
+    padding: 1rem !important;
+  }
+
+  .me-container {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 1rem !important;
+    margin-bottom: 1.5rem !important;
+    max-height: none !important;
+  }
+
+  .me-left-panel, .me-right-panel {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .me-teams-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+
+  .me-center-divider {
+    width: 100% !important;
+    height: 1px !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    margin: 0.5rem 0 !important;
+    flex-direction: row !important;
+  }
+
+  .me-center-stat {
+    padding: 4px 8px !important;
+  }
+
+  #match-end-screen table {
+    font-size: 0.7rem !important;
+    width: 100% !important;
+  }
+
+  #btn-me-rematch,
+  #btn-me-home {
+    width: 100% !important;
+    padding: 0.875rem !important;
+    margin-top: 0.5rem !important;
+  }
+
+  .me-btn-group {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  .me-btn {
+    width: 100% !important;
+  }
+}
+
+/* Portrait and landscape phone-specific screen rules */
+@media (max-width: 640px) and (orientation: landscape) {
+  #player-hand-container {
+    min-height: clamp(65px, 22vh, 85px) !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  .card-element, .hand-slot {
+    width: clamp(1.8rem, 6.5vw, 2.5rem) !important;
+    height: clamp(2.4rem, 9vw, 3.5rem) !important;
+  }
+
+  #trick-mat-wrapper {
+    transform: translate(-50%, -50%) scale(clamp(0.45, 22vh / 160px, 0.85)) !important;
+  }
+
+  .opponent-diamond {
+    width: clamp(50px, 12vw, 68px) !important;
+    height: clamp(50px, 12vw, 68px) !important;
+  }
+
+  .teammate-slot {
+    width: clamp(50px, 12vw, 68px) !important;
+    height: clamp(50px, 12vw, 68px) !important;
+    top: clamp(2px, 1.5vh, 8px) !important;
+  }
+
+  #chat-panel {
+    height: 70dvh !important;
+  }
+}

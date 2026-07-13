@@ -33,8 +33,8 @@ export function registerLobbyHandlers(io, socket, engine) {
       // Synchronize state immediately following registration actions for every participant.
       room.broadcastGameState();
 
-      const activePlayers = room.players.filter(p => !p.isDisconnected);
-      if (room.players.length === 4 && activePlayers.length === 4 && !room.matchManager) {
+      const seatedActive = room.players.filter(p => p.seat !== null && !p.isDisconnected);
+      if (seatedActive.length === 4 && !room.matchManager) {
         room.startLobbyCountdown(io);
       }
     } catch (err) {

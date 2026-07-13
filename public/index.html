@@ -284,6 +284,33 @@
             color: #d52b2b;
         }
 
+        .join-team-btn {
+            margin-top: 14px;
+            font-size: 0.85rem;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .join-team-btn:hover:not(:disabled) {
+            background: #222;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+        .join-team-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .join-team-btn.full {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.4);
+            color: #ef4444;
+        }
+        .join-team-btn.pending {
+            background: rgba(234, 179, 8, 0.2);
+            border: 1px solid rgba(234, 179, 8, 0.4);
+            color: #facc15;
+        }
+
         .slot-row {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1161,6 +1188,7 @@
                             <div class="slot-status" id="lobby-seat-2">waiting</div>
                         </div>
                     </div>
+                    <button id="btn-join-black" class="join-team-btn play-action">Join Black</button>
                 </section>
 
                 <div class="lobby-divider" aria-hidden="true"></div>
@@ -1181,6 +1209,7 @@
                             <div class="slot-status" id="lobby-seat-3">waiting</div>
                         </div>
                     </div>
+                    <button id="btn-join-red" class="join-team-btn play-action">Join Red</button>
                 </section>
             </div>
 
@@ -1339,6 +1368,17 @@
                 <button class="moto-tile" data-moto="wolf-head" data-icon="/src/icons/wolf-head.svg" data-label="Wolf Head" style="background-color: #1a202c"><img src="/src/icons/wolf-head.svg" alt=""></button>
             </div>
             <button id="btn-close-moto" class="play-action mt-4" style="font-size: 14px; padding: 8px 16px; min-width: 120px;">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="team-request-modal" class="hidden fixed inset-0 trump-modal-backdrop flex items-center justify-center z-50">
+        <div class="trump-modal-card text-center space-y-5">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.1em;">Team Join Request</h2>
+            <p id="team-request-message" style="color: rgba(255,255,255,0.85); font-size: 0.95rem; line-height: 1.5;"></p>
+            <div class="flex justify-center gap-4 mt-4">
+                <button id="btn-accept-request" class="play-action" style="font-size: 14px; padding: 10px 20px; min-width: 110px; background: #22c55e;">Accept</button>
+                <button id="btn-reject-request" class="play-action" style="font-size: 14px; padding: 10px 20px; min-width: 110px; background: #ef4444;">Reject</button>
+            </div>
         </div>
     </div>
 

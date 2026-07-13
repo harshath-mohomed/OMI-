@@ -133,7 +133,7 @@ export class Renderer {
     return `/assets/SVG-cards-1.3/${rank}_of_${suit}${variantSuffix}.svg`;
   }
 
-  renderLobby(state) {
+  renderLobby(state, localPlayer) {
     const players = state.players || [];
     const seatLabels = [0, 2, 1, 3];
 
@@ -154,6 +154,54 @@ export class Renderer {
         countdownEl.classList.remove('hidden');
       } else {
         countdownEl.classList.add('hidden');
+      }
+    }
+
+    const btnBlack = document.getElementById('btn-join-black');
+    const btnRed = document.getElementById('btn-join-red');
+
+    if (btnBlack && btnRed) {
+      const teamAPlayers = players.filter(p => [0, 2].includes(p.seat));
+      const teamBPlayers = players.filter(p => [1, 3].includes(p.seat));
+
+      const isTeamAFull = teamAPlayers.length >= 2;
+      const isTeamBFull = teamBPlayers.length >= 2;
+
+      const hasSeat = localPlayer && localPlayer.seat !== null;
+      const currentTeam = localPlayer ? localPlayer.team : null;
+
+      // Handle Black Button
+      if (currentTeam === 'A') {
+        btnBlack.style.display = 'none';
+        btnBlack.disabled = true;
+      } else {
+        btnBlack.style.display = 'block';
+        if (state.pendingTeamRequest && state.pendingTeamRequest.targetTeam === 'A') {
+          btnBlack.innerText = 'PENDING...';
+          btnBlack.disabled = true;
+          btnBlack.className = 'join-team-btn play-action pending';
+        } else {
+          btnBlack.innerText = isTeamAFull ? 'FULL' : 'Join Black';
+          btnBlack.disabled = hasSeat;
+          btnBlack.className = 'join-team-btn play-action' + (isTeamAFull ? ' full' : '');
+        }
+      }
+
+      // Handle Red Button
+      if (currentTeam === 'B') {
+        btnRed.style.display = 'none';
+        btnRed.disabled = true;
+      } else {
+        btnRed.style.display = 'block';
+        if (state.pendingTeamRequest && state.pendingTeamRequest.targetTeam === 'B') {
+          btnRed.innerText = 'PENDING...';
+          btnRed.disabled = true;
+          btnRed.className = 'join-team-btn play-action pending';
+        } else {
+          btnRed.innerText = isTeamBFull ? 'FULL' : 'Join Red';
+          btnRed.disabled = hasSeat;
+          btnRed.className = 'join-team-btn play-action' + (isTeamBFull ? ' full' : '');
+        }
       }
     }
 

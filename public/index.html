@@ -1323,6 +1323,160 @@
             }
         }
 
+        /* --- FULLCOAT Styles --- */
+        .fullcoat-card {
+            background: #3c3c3c;
+            border-radius: 24px;
+            padding: 20px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 400px;
+            width: 90vw;
+        }
+
+        .fullcoat-card h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 16px 0;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .fullcoat-pill-btn {
+            background-color: #000;
+            border-radius: 9999px;
+            padding: 10px 24px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .fullcoat-pill-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .fullcoat-pill-btn.btn-cyan {
+            color: #00f7ff;
+        }
+
+        .fullcoat-pill-btn.btn-red {
+            color: #ff0a0a;
+        }
+
+        .fullcoat-yesno-card {
+            background: #3c3c3c;
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 360px;
+            width: 90vw;
+            margin-top: 15px;
+        }
+
+        .fullcoat-yesno-text {
+            color: #fff;
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .fullcoat-yesno-actions {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .fullcoat-yesno-link {
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .fullcoat-yesno-link:hover {
+            opacity: 0.8;
+        }
+
+        .fullcoat-yesno-link.yes {
+            color: #00f7ff;
+        }
+
+        .fullcoat-yesno-link.no {
+            color: #ff0a0a;
+        }
+
+        /* Swap card state classes */
+        .hand-slot.filled.exchange-selected {
+            box-shadow: 0 0 15px #00f7ff;
+            border: 2px solid #00f7ff;
+        }
+
+        .hand-slot.filled.exchange-dimmed {
+            opacity: 0.4;
+        }
+
+        /* Sitting out overlay */
+        .sitting-out-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(30, 30, 30, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: inherit;
+            z-index: 20;
+            pointer-events: auto;
+        }
+
+        .sitting-out-badge {
+            background: #2a2a2a;
+            color: #bbb;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .opponent-diamond .sitting-out-overlay {
+            transform: rotate(-45deg);
+            width: 141%;
+            height: 141%;
+        }
+
+        .hand-sitting-out-overlay {
+            position: absolute;
+            inset: -10px;
+            background: rgba(15, 15, 15, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            z-index: 40;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .hand-sitting-out-badge {
+            background: #222;
+            color: #bbb;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+        }
+
     </style>
 </head>
 <body>
@@ -1650,6 +1804,51 @@
         <div class="me-btn-group fade-in-slide-up">
             <button id="btn-me-rematch" class="me-btn me-btn-rematch">REMATCH</button>
             <button id="btn-me-home" class="me-btn me-btn-home">HOME</button>
+        </div>
+    </div>
+
+    <!-- Fullcoat decision/request overlay -->
+    <div id="fullcoat-overlay" class="hidden fixed inset-0 flex flex-col items-center justify-center z-50" style="background: rgba(0, 0, 0, 0.45);">
+        <!-- PLAY decision card (for trump caller) -->
+        <div id="fullcoat-decision-card" class="hidden fullcoat-card flex flex-col items-center justify-center">
+            <h2>PLAY</h2>
+            <div class="flex gap-4 justify-center">
+                <button id="btn-fullcoat-declare" class="fullcoat-pill-btn btn-cyan">FULLCOAT</button>
+                <button id="btn-fullcoat-continue" class="fullcoat-pill-btn btn-red">CONTINUE</button>
+            </div>
+        </div>
+
+        <!-- YES/NO partner prompt card -->
+        <div id="fullcoat-prompt-card" class="hidden fullcoat-yesno-card flex flex-col items-center justify-center">
+            <p class="fullcoat-yesno-text">can you give me two cards ?</p>
+            <div class="fullcoat-yesno-actions">
+                <span id="btn-fullcoat-yes" class="fullcoat-yesno-link yes">YES</span>
+                <span class="mx-2 text-gray-500">|</span>
+                <span id="btn-fullcoat-no" class="fullcoat-yesno-link no">NO</span>
+            </div>
+        </div>
+        
+        <!-- Status / Waiting label -->
+        <div id="fullcoat-status-card" class="hidden text-center text-white bg-black/85 px-6 py-4 rounded-xl border border-white/10 max-w-sm">
+            <p id="fullcoat-status-text" class="text-sm font-semibold tracking-wider uppercase"></p>
+        </div>
+    </div>
+
+    <!-- Card Exchange Prompt & Confirm Button (shown above player hand) -->
+    <div id="fullcoat-exchange-container" class="hidden absolute bottom-[140px] left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-3">
+        <div class="bg-black/80 text-[#00f7ff] px-6 py-2 rounded-full border border-[#00f7ff]/30 text-sm font-bold tracking-widest uppercase shadow-lg">
+            Select 2 cards to give
+        </div>
+        <button id="btn-fullcoat-exchange-confirm" class="play-action bg-[#2b2b2b] text-white hover:bg-black border border-white/20 transition-all font-bold text-sm tracking-widest px-8 py-3 rounded-full shadow-2xl hidden" style="font-size: 14px; min-width: 180px;">
+            CONFIRM EXCHANGE
+        </button>
+    </div>
+
+    <!-- Fullcoat Round End Summary Modal -->
+    <div id="fullcoat-round-modal" class="hidden fixed inset-0 trump-modal-backdrop flex items-center justify-center z-50">
+        <div class="trump-modal-card text-center space-y-6 max-w-sm">
+            <h2 id="fullcoat-round-title" class="text-3xl font-extrabold tracking-widest uppercase"></h2>
+            <div id="fullcoat-round-body" class="text-lg font-bold text-white tracking-wide"></div>
         </div>
     </div>
 

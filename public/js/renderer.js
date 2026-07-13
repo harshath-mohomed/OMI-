@@ -38,7 +38,7 @@ export class Renderer {
     }
   }
 
-  renderHand(cards, isYourTurn, trumpSuit) {
+  renderHand(cards, isYourTurn, trumpSuit, selectedExchangeCards = []) {
     this.handContainer.innerHTML = '';
 
     if (trumpSuit) {
@@ -65,6 +65,12 @@ export class Renderer {
 
         if (!isYourTurn) {
           cardEl.classList.add('disabled');
+        }
+
+        if (selectedExchangeCards.includes(card.id)) {
+          cardEl.classList.add('exchange-selected');
+        } else if (selectedExchangeCards.length > 0) {
+          cardEl.classList.add('exchange-dimmed');
         }
 
         this.handContainer.appendChild(cardEl);
@@ -315,6 +321,20 @@ export class Renderer {
 
       element.classList.toggle('active-turn', isActive);
 
+      let overlay = element.querySelector('.sitting-out-overlay');
+      if (player && player.isOut) {
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.className = 'sitting-out-overlay';
+          overlay.innerHTML = '<span class="sitting-out-badge">Sitting out</span>';
+          element.appendChild(overlay);
+        }
+      } else {
+        if (overlay) {
+          overlay.remove();
+        }
+      }
+
       if (relativePosition === 'bottom') continue;
 
       if (relativePosition === 'top') {
@@ -435,6 +455,125 @@ export class Renderer {
       const iconEl = document.getElementById('me-mvp-icon');
       if (iconEl) {
         iconEl.src = mvp.avatar_url || '/src/icons/wolf-head.svg';
+      }
+    }
+  }
+
+  renderFullcoat(state, localPlayer, selectedExchangeCards = []) {
+    const fullcoatOverlay = document.getElementById('fullcoat-overlay');
+    const decisionCard = document.getElementById('fullcoat-decision-card');
+    const promptCard = document.getElementById('fullcoat-prompt-card');
+    const statusCard = document.getElementById('fullcoat-status-card');
+    const statusText = document.getElementById('fullcoat-status-text');
+    const exchangeContainer = document.getElementById('fullcoat-exchange-container');
+    const confirmBtn = document.getElementById('btn-fullcoat-exchange-confirm');
+    const roundModal = document.getElementById('fullcoat-round-modal');
+
+    if (fullcoatOverlay) fullcoatOverlay.classList.add('hidden');
+    if (decisionCard) decisionCard.classList.add('hidden');
+    if (promptCard) promptCard.classList.add('hidden');
+    if (statusCard) statusCard.classList.add('hidden');
+    if (exchangeContainer) exchangeContainer.classList.add('hidden');
+    if (confirmBtn) confirmBtn.classList.add('hidden');
+    if (roundModal) roundModal.classList.add('hidden');
+
+    if (state.phase === 'FULLCOAT_DECISION') {
+      if (fullcoatOverlay) fullcoatOverlay.classList.remove('hidden');
+
+      const isChooser = state.trumpChooserId === localPlayer?.id;
+      if (isChooser && !state.fullcoatRequest) {
+        if (decisionCard) decisionCard.classList.remove('hidden');
+      } else if (state.fullcoatRequest) {
+        const partnerSeat = (state.players.find(p => p.id === state.trumpChooserId)?.seat + 2) % 4;
+        const isPartner = localPlayer?.seat === partnerSeat;
+
+        if (isPartner) {
+          if (promptCard) promptCard.classList.remove('hidden');
+        } else {
+          if (statusCard && statusText) {
+            statusText.innerText = `Waiting for ${state.fullcoatRequest.declarerName}'s partner to respond...`;
+            statusCard.classList.remove('hidden');
+          }
+        }
+      } else {
+        if (statusCard && statusText) {
+          const chooserName = state.players.find(p => p.id === state.trumpChooserId)?.username || 'Trump-caller';
+          statusText.innerText = `Waiting for ${chooserName} to declare play...`;
+          statusCard.classList.remove('hidden');
+        }
+      }
+    }
+
+    if (state.phase === 'FULLCOAT_EXCHANGE') {
+      const isExchanger = state.isFullcoatActive && (localPlayer?.id === state.fullcoatDeclarerId || localPlayer?.id === state.fullcoatPartnerId);
+      if (isExchanger) {
+        if (exchangeContainer) exchangeContainer.classList.remove('hidden');
+        if (confirmBtn) {
+          if (selectedExchangeCards.length === 2 && !state.fullcoatExchange?.confirmed?.[localPlayer?.id]) {
+            confirmBtn.classList.remove('hidden');
+          } else {
+            confirmBtn.classList.add('hidden');
+          }
+        }
+      }
+
+      if (isExchanger && state.fullcoatExchange?.confirmed?.[localPlayer?.id]) {
+        if (fullcoatOverlay) {
+          fullcoatOverlay.classList.remove('hidden');
+          if (statusCard && statusText) {
+            statusText.innerText = 'Waiting for other player to confirm exchange...';
+            statusCard.classList.remove('hidden');
+          }
+        }
+      } else if (!isExchanger) {
+        if (fullcoatOverlay) {
+          fullcoatOverlay.classList.remove('hidden');
+          if (statusCard && statusText) {
+            statusText.innerText = 'Card exchange in progress...';
+            statusCard.classList.remove('hidden');
+          }
+        }
+      }
+    }
+
+    if (state.phase === 'ROUND_END' && state.fullcoatSummary) {
+      if (roundModal) {
+        const titleEl = document.getElementById('fullcoat-round-title');
+        const bodyEl = document.getElementById('fullcoat-round-body');
+        
+        if (state.fullcoatSummary.win) {
+          if (titleEl) {
+            titleEl.innerText = 'FULLCOAT WIN';
+            titleEl.style.color = '#00f7ff';
+          }
+          if (bodyEl) bodyEl.innerText = `+${state.fullcoatSummary.points} TOKENS`;
+        } else {
+          if (titleEl) {
+            titleEl.innerText = 'FULLCOAT FAIL';
+            titleEl.style.color = '#ff0a0a';
+          }
+          if (bodyEl) bodyEl.innerText = `−${state.fullcoatSummary.points} TOKENS`;
+        }
+        roundModal.classList.remove('hidden');
+      }
+    }
+
+    let handOverlay = document.getElementById('hand-sitting-out-overlay');
+    if (localPlayer && localPlayer.isOut) {
+      if (!handOverlay) {
+        handOverlay = document.createElement('div');
+        handOverlay.id = 'hand-sitting-out-overlay';
+        handOverlay.className = 'hand-sitting-out-overlay';
+        handOverlay.innerHTML = '<span class="hand-sitting-out-badge">Sitting out</span>';
+        const handWrap = document.getElementById('player-hand-container');
+        if (handWrap) {
+          handWrap.style.position = 'relative';
+          handWrap.appendChild(handOverlay);
+        }
+      }
+    } else {
+      if (handOverlay) {
+        handOverlay.remove();
       }
     }
   }

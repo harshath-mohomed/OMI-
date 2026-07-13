@@ -190,7 +190,13 @@ export class Room {
         roundsWon: { A: 0, B: 0 },
         hangingBonus: 0,
         tricksPlayed: 0,
-        currentTrick: []
+        currentTrick: [],
+        isFullcoatActive: false,
+        fullcoatDeclarerId: null,
+        fullcoatPartnerId: null,
+        fullcoatRequest: null,
+        fullcoatExchange: null,
+        fullcoatSummary: null
       };
     }
 
@@ -213,7 +219,13 @@ export class Room {
         seat: t.player.seat,
         card: t.card.toJSON()
       })),
-      matchEndData: this.matchManager.phase === 'MATCH_END' ? this.lastMatchEndData : null
+      matchEndData: this.matchManager.phase === 'MATCH_END' ? this.lastMatchEndData : null,
+      isFullcoatActive: this.matchManager.isFullcoatActive,
+      fullcoatDeclarerId: this.matchManager.fullcoatDeclarerId,
+      fullcoatPartnerId: this.matchManager.fullcoatPartnerId,
+      fullcoatRequest: this.matchManager.fullcoatRequest,
+      fullcoatExchange: this.matchManager.fullcoatExchange,
+      fullcoatSummary: this.matchManager.fullcoatSummary
     };
   }
 

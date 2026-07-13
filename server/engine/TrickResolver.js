@@ -7,7 +7,7 @@ export class TrickResolver {
    * @returns {Player} Winning player instance
    */
   static resolveTrick(plays, trumpSuit) {
-    if (!plays || plays.length !== 4) {
+    if (!plays || plays.length === 0) {
       throw new Error('Invalid collection length for resolution execution');
     }
 

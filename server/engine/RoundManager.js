@@ -54,9 +54,14 @@ export class RoundManager {
 
     this.currentTrick.push({ player, card });
     
-    const isTrickComplete = this.currentTrick.length === 4;
+    const activePlayersCount = this.players.filter(p => !p.isOut).length;
+    const isTrickComplete = this.currentTrick.length === activePlayersCount;
     if (!isTrickComplete) {
-      this.activeTurnSeat = (this.activeTurnSeat + 3) % 4;
+      let nextSeat = (this.activeTurnSeat + 3) % 4;
+      while (this.players.find(p => p.seat === nextSeat).isOut) {
+        nextSeat = (nextSeat + 3) % 4;
+      }
+      this.activeTurnSeat = nextSeat;
     }
 
     return isTrickComplete;

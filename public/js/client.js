@@ -13,6 +13,7 @@ class GameClient {
     SettingsManager.init(AudioManager);
 
     this.localState = { seat: null, currentGameState: null };
+    this.selectedExchangeCards = [];
     this.motoCatalog = {
       'ceaser': { label: 'Ceaser', icon: '/src/icons/ceaser.svg' },
       'dagger-rose': { label: 'Dagger Rose', icon: '/src/icons/dagger-rose.svg' },
@@ -169,7 +170,57 @@ class GameClient {
       if (!targetCard) return;
 
       const cardId = targetCard.dataset.cardId;
+
+      const gameState = this.localState.currentGameState;
+      const isExchanger = gameState && gameState.isFullcoatActive &&
+                          (this.socket.id === gameState.fullcoatDeclarerId ||
+                           this.socket.id === gameState.fullcoatPartnerId);
+
+      if (gameState && gameState.phase === 'FULLCOAT_EXCHANGE' && isExchanger) {
+        const idx = this.selectedExchangeCards.indexOf(cardId);
+        if (idx !== -1) {
+          this.selectedExchangeCards.splice(idx, 1);
+        } else if (this.selectedExchangeCards.length < 2) {
+          this.selectedExchangeCards.push(cardId);
+        }
+
+        this.renderer.renderHand(gameState.yourHand || [], false, gameState.trumpSuit, this.selectedExchangeCards);
+
+        const confirmBtn = document.getElementById('btn-fullcoat-exchange-confirm');
+        if (confirmBtn) {
+          if (this.selectedExchangeCards.length === 2) {
+            confirmBtn.classList.remove('hidden');
+          } else {
+            confirmBtn.classList.add('hidden');
+          }
+        }
+        return;
+      }
+
       this.socket.emit('playCard', { cardId });
+    });
+
+    document.getElementById('btn-fullcoat-declare')?.addEventListener('click', () => {
+      this.socket.emit('declareFullcoat', { action: 'fullcoat' });
+    });
+
+    document.getElementById('btn-fullcoat-continue')?.addEventListener('click', () => {
+      this.socket.emit('declareFullcoat', { action: 'continue' });
+    });
+
+    document.getElementById('btn-fullcoat-yes')?.addEventListener('click', () => {
+      this.socket.emit('respondFullcoatRequest', { accept: true });
+    });
+
+    document.getElementById('btn-fullcoat-no')?.addEventListener('click', () => {
+      this.socket.emit('respondFullcoatRequest', { accept: false });
+    });
+
+    document.getElementById('btn-fullcoat-exchange-confirm')?.addEventListener('click', () => {
+      if (this.selectedExchangeCards.length === 2) {
+        this.socket.emit('confirmFullcoatExchange', { cardIds: this.selectedExchangeCards });
+        document.getElementById('btn-fullcoat-exchange-confirm')?.classList.add('hidden');
+      }
     });
 
     const chatInput = document.getElementById('chat-input');
@@ -237,6 +288,14 @@ class GameClient {
   bindSocketEvents() {
     this.socket.on('chatMessage', (payload) => {
       this.appendChatMessage(payload);
+    });
+
+    this.socket.on('fullcoat_rejected', ({ declarerName }) => {
+      this.appendChatMessage({
+        senderId: 'system',
+        text: `${declarerName}'s Fullcoat request was rejected by partner. Game continues.`,
+        timestamp: Date.now()
+      });
     });
 
     this.socket.on('teamJoinRequest', ({ requestingPlayerId, requestingPlayerName, targetTeam }) => {
@@ -348,10 +407,15 @@ class GameClient {
         this.showGameScreen();
       }
 
+      if (state.phase !== 'FULLCOAT_EXCHANGE') {
+        this.selectedExchangeCards = [];
+      }
+
       const isYourTurn = state.activeTurnSeat === this.localState.seat && state.phase === 'PLAYING';
-      this.renderer.renderHand(state.yourHand || [], isYourTurn, state.trumpSuit);
+      this.renderer.renderHand(state.yourHand || [], isYourTurn, state.trumpSuit, this.selectedExchangeCards);
       this.renderer.renderTrick(state.currentTrick || [], this.localState.seat);
       this.renderer.updateMetadata(state, this.localState.seat);
+      this.renderer.renderFullcoat(state, this.localState.player, this.selectedExchangeCards);
 
       const trumpModal = document.getElementById('trump-modal');
       const chooserSeat = state.trumpChooserId

@@ -12,6 +12,7 @@ export class Player {
     this.hand = [];
     this.seat = null; // Integer index 0-3
     this.motoId = null;
+    this.isOut = false;
   }
 
   /** @returns {boolean} Whether player belongs to Team A (seats 0, 2) or Team B (seats 1, 3) */
@@ -42,6 +43,7 @@ export class Player {
   /** Clears round transient memory */
   clearHand() {
     this.hand = [];
+    this.isOut = false;
   }
 
   toJSON() {
@@ -52,7 +54,8 @@ export class Player {
       team: this.team,
       isDisconnected: this.isDisconnected,
       cardCount: this.hand.length,
-      motoId: this.motoId
+      motoId: this.motoId,
+      isOut: this.isOut
     };
   }
 }

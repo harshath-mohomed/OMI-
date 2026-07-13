@@ -21,6 +21,14 @@ export class MatchManager {
     this.scoreManager = new ScoreManager();
     this.roundManager = new RoundManager(this.players, this.scoreManager);
     this.isResolvingTrick = false;
+
+    // Fullcoat state variables
+    this.isFullcoatActive = false;
+    this.fullcoatDeclarerId = null;
+    this.fullcoatPartnerId = null;
+    this.fullcoatRequest = null;
+    this.fullcoatExchange = null;
+    this.fullcoatSummary = null;
   }
 
   initializeMatch() {
@@ -45,6 +53,11 @@ export class MatchManager {
       case CONFIG.GAME_PHASES.TRUMP_SELECTION:
         this.promptTrumpSelection();
         break;
+      case CONFIG.GAME_PHASES.FULLCOAT_DECISION:
+      case CONFIG.GAME_PHASES.FULLCOAT_EXCHANGE:
+      case CONFIG.GAME_PHASES.ROUND_END:
+        // Wait for player interactions / timers
+        break;
       case CONFIG.GAME_PHASES.SECOND_DEAL:
         this.executeSecondDeal();
         break;
@@ -61,7 +74,17 @@ export class MatchManager {
   }
 
   executeFirstDeal() {
-    this.players.forEach(player => player.clearHand());
+    this.players.forEach(player => {
+      player.clearHand();
+      player.isOut = false;
+    });
+    this.isFullcoatActive = false;
+    this.fullcoatDeclarerId = null;
+    this.fullcoatPartnerId = null;
+    this.fullcoatRequest = null;
+    this.fullcoatExchange = null;
+    this.fullcoatSummary = null;
+
     this.dealer.prepareDeck();
     this.dealer.dealToAll(this.players, CONFIG.CARDS_PER_DEAL);
 
@@ -94,7 +117,7 @@ export class MatchManager {
 
     this.roundManager.setTrump(suit);
     this.emitCallback('TRUMP_SUIT_ANNOUNCED', { suit });
-    this.transitionTo(CONFIG.GAME_PHASES.SECOND_DEAL);
+    this.transitionTo(CONFIG.GAME_PHASES.FULLCOAT_DECISION);
   }
 
   executeSecondDeal() {
@@ -162,17 +185,40 @@ export class MatchManager {
   }
 
   finishHand() {
-    const SummaryData = this.scoreManager.finalizeHand(this.roundManager.trumpTeam);
+    const SummaryData = this.scoreManager.finalizeHand(this.roundManager.trumpTeam, this.isFullcoatActive);
 
     this.emitCallback('ROUND_OVER_SUMMARY', SummaryData);
 
-    const matchWinnerTeam = this.scoreManager.checkMatchWinner();
-    if (matchWinnerTeam) {
-      this.transitionTo(CONFIG.GAME_PHASES.MATCH_END);
+    if (this.isFullcoatActive) {
+      this.fullcoatSummary = {
+        win: SummaryData.isFullcoatWin,
+        points: SummaryData.allocatedPoints
+      };
+
+      this.transitionTo(CONFIG.GAME_PHASES.ROUND_END);
+
+      setTimeout(() => {
+        this.isFullcoatActive = false;
+        this.fullcoatSummary = null;
+
+        const matchWinnerTeam = this.scoreManager.checkMatchWinner();
+        if (matchWinnerTeam) {
+          this.transitionTo(CONFIG.GAME_PHASES.MATCH_END);
+        } else {
+          this.players.forEach(p => p.clearHand());
+          this.dealer.rotateDealer();
+          this.transitionTo(CONFIG.GAME_PHASES.FIRST_DEAL);
+        }
+      }, 5000);
     } else {
-      this.players.forEach(p => p.clearHand());
-      this.dealer.rotateDealer();
-      this.transitionTo(CONFIG.GAME_PHASES.FIRST_DEAL);
+      const matchWinnerTeam = this.scoreManager.checkMatchWinner();
+      if (matchWinnerTeam) {
+        this.transitionTo(CONFIG.GAME_PHASES.MATCH_END);
+      } else {
+        this.players.forEach(p => p.clearHand());
+        this.dealer.rotateDealer();
+        this.transitionTo(CONFIG.GAME_PHASES.FIRST_DEAL);
+      }
     }
   }
 

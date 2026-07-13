@@ -38,12 +38,52 @@ export class ScoreManager {
   /**
    * Finalizes a hand and transfers score tokens according to OMI rules.
    * @param {string} trumpTeam
+   * @param {boolean} isFullcoatActive
    * @returns {Object}
    */
-  finalizeHand(trumpTeam) {
+  finalizeHand(trumpTeam, isFullcoatActive = false) {
     this.matchStats.roundsPlayed++;
     const teamA = this.roundTricks.A;
     const teamB = this.roundTricks.B;
+
+    if (isFullcoatActive) {
+      const declarerTeam = trumpTeam;
+      const opponentTeam = declarerTeam === 'A' ? 'B' : 'A';
+      const declarerTricks = this.roundTricks[declarerTeam];
+
+      let winningTeam, losingTeam, allocatedPoints, isFullcoatWin;
+
+      if (declarerTricks === 8) {
+        // Fullcoat Win: Declarer team wins all tricks -> +3 tokens (deduct 3 from opponent score)
+        winningTeam = declarerTeam;
+        losingTeam = opponentTeam;
+        allocatedPoints = Math.min(3, this.matchScores[losingTeam]);
+        this.matchScores[losingTeam] -= allocatedPoints;
+        isFullcoatWin = true;
+      } else {
+        // Fullcoat Fail: Declarer loses even 1 trick -> -3 tokens from declarer's team
+        winningTeam = opponentTeam;
+        losingTeam = declarerTeam;
+        allocatedPoints = Math.min(3, this.matchScores[losingTeam]);
+        this.matchScores[losingTeam] -= allocatedPoints;
+        isFullcoatWin = false;
+      }
+
+      this.matchStats.roundsWon[winningTeam]++;
+
+      return {
+        winningTeam,
+        losingTeam,
+        allocatedPoints,
+        basePoints: 3,
+        bonusPoints: 0,
+        isKaputhi: declarerTricks === 8,
+        isHanging: false,
+        isFullcoat: true,
+        isFullcoatWin,
+        currentMatchScores: { ...this.matchScores }
+      };
+    }
 
     if (teamA === 4 && teamB === 4) {
       this.hangingBonus = 2; // 2 bonus tokens held in reserve

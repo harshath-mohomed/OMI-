@@ -198,7 +198,7 @@ export class Renderer {
       if (state.trumpSuit === 'CLUBS' || state.trumpSuit === 'SPADES') {
         trumpEl.style.color = '#000000';
       } else if (state.trumpSuit === 'DIAMONDS' || state.trumpSuit === 'HEARTS') {
-        trumpEl.style.color = '#dc2626';
+        trumpEl.style.color = '#ff0000';
       } else {
         trumpEl.style.color = '';
       }

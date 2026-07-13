@@ -1154,6 +1154,10 @@
 </head>
 <body>
 
+    <button id="btn-fullscreen" aria-label="Toggle Fullscreen" title="Fullscreen">
+        <span id="fullscreen-icon">⛶</span>
+    </button>
+
     <img class="landing-bg" src="/src/card_background_2.jpg" alt="" aria-hidden="true">
     <div class="landing-overlay"></div>
 
@@ -1233,11 +1237,20 @@
         <div class="tavern-overlay" aria-hidden="true"></div>
 
         <div class="game-overlay">
-            <div id="mobile-score-bar" class="hidden w-full flex justify-between items-center px-3 py-1 text-white bg-black/70 text-xs">
-                <span id="mobile-score-black">BLACK 0/10</span>
-                <span id="mobile-trump">—</span>
-                <span id="mobile-tricks">0/8</span>
-                <span id="mobile-score-red">RED 0/10</span>
+            <div id="mobile-score-strip">
+                <div class="mss-team">
+                    <span class="mss-name">BLK</span>
+                    <span id="mss-score-black" class="mss-score">0/10</span>
+                    <span id="mss-tricks-black" class="mss-tricks">0🂠</span>
+                </div>
+                <div class="mss-center">
+                    <span id="mss-trump" class="mss-trump">—</span>
+                </div>
+                <div class="mss-team mss-team-right">
+                    <span id="mss-tricks-red" class="mss-tricks">0🂠</span>
+                    <span id="mss-score-red" class="mss-score">0/10</span>
+                    <span class="mss-name mss-name-red">RED</span>
+                </div>
             </div>
             <aside id="chat-panel" class="chat-panel frosted-panel" aria-label="Chat">
                 <div class="team-status-bars" aria-hidden="true">

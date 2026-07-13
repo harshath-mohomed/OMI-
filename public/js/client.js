@@ -2,6 +2,7 @@ import { socketConnectionManager } from './socket.js';
 import { Renderer } from './renderer.js';
 import { AnimationEngine } from './animation.js';
 import { AudioManager } from './audio.js';
+import { SettingsManager } from './settings.js';
 
 class GameClient {
   constructor() {
@@ -9,6 +10,7 @@ class GameClient {
     this.renderer = new Renderer();
     this.animation = new AnimationEngine();
     AudioManager.init();
+    SettingsManager.init(AudioManager);
 
     this.localState = { seat: null, currentGameState: null };
     this.motoCatalog = {
@@ -38,6 +40,7 @@ class GameClient {
     document.getElementById('game-screen')?.classList.remove('hidden');
     document.querySelector('.landing-bg')?.classList.add('hidden');
     document.querySelector('.landing-overlay')?.classList.add('hidden');
+    SettingsManager.repositionForScreen('game');
   }
 
   showHomeScreen() {
@@ -47,6 +50,7 @@ class GameClient {
     document.getElementById('match-end-screen')?.classList.add('hidden');
     document.querySelector('.landing-bg')?.classList.remove('hidden');
     document.querySelector('.landing-overlay')?.classList.remove('hidden');
+    SettingsManager.repositionForScreen('home');
   }
 
   showLobbyScreen() {
@@ -56,6 +60,7 @@ class GameClient {
     document.getElementById('match-end-screen')?.classList.add('hidden');
     document.querySelector('.landing-bg')?.classList.remove('hidden');
     document.querySelector('.landing-overlay')?.classList.remove('hidden');
+    SettingsManager.repositionForScreen('lobby');
   }
 
   openMotoModal() {
@@ -95,6 +100,7 @@ class GameClient {
     document.getElementById('match-end-screen')?.classList.add('flex');
     document.querySelector('.landing-bg')?.classList.add('hidden');
     document.querySelector('.landing-overlay')?.classList.add('hidden');
+    SettingsManager.repositionForScreen('matchEnd');
   }
 
   joinRoom(roomCode) {

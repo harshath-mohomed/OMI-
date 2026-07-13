@@ -400,7 +400,7 @@
         /* Chat panel — top left */
         .chat-panel {
             position: absolute;
-            top: 16px;
+            top: 80px;
             left: 16px;
             width: min(240px, 28vw);
             padding: 12px 14px 14px;
@@ -1117,6 +1117,183 @@
         }
         .flash-red {
             animation: flashRed 0.6s ease-out;
+        }
+
+        /* ── Settings System ── */
+        .settings-btn {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1000;
+            width: 42px;
+            height: 42px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 12px;
+            background: rgba(18, 18, 18, 0.72);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+                        border-color 0.2s ease,
+                        box-shadow 0.3s ease;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+            outline: none;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .settings-btn:hover {
+            transform: scale(1.08);
+            border-color: var(--cyan);
+            box-shadow: 0 0 15px rgba(0, 247, 255, 0.35), 0 4px 14px rgba(0, 0, 0, 0.35);
+        }
+
+        .settings-btn.active {
+            border-color: var(--cyan);
+            box-shadow: 0 0 12px rgba(0, 247, 255, 0.25);
+        }
+
+        .settings-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 998;
+            display: none;
+        }
+
+        .settings-backdrop.visible {
+            display: block;
+        }
+
+        .settings-panel {
+            position: fixed;
+            z-index: 999;
+            width: 240px;
+            background: rgba(18, 18, 18, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 14px;
+            padding: 14px 16px 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+            /* Animation — hidden by default */
+            opacity: 0;
+            transform: translateY(-8px);
+            pointer-events: none;
+            transition: opacity 0.2s ease,
+                        transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .settings-panel.open {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .settings-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .settings-panel-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+        }
+
+        .settings-panel-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0 2px;
+            line-height: 1;
+            transition: color 0.15s ease;
+        }
+
+        .settings-panel-close:hover {
+            color: #fff;
+        }
+
+        .settings-panel-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 4px;
+            border-radius: 8px;
+            transition: background 0.15s ease;
+        }
+
+        .settings-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .settings-toggle-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.15s ease,
+                        border-color 0.2s ease,
+                        box-shadow 0.2s ease;
+            padding: 0;
+            outline: none;
+            flex-shrink: 0;
+        }
+
+        .settings-toggle-btn:hover {
+            transform: scale(1.08);
+            border-color: var(--cyan);
+            box-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+        }
+
+        .settings-toggle-icon {
+            line-height: 1;
+        }
+
+        .settings-toggle-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            user-select: none;
+        }
+
+        @media (max-width: 720px) {
+            .settings-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+                border-radius: 10px;
+            }
+
+            .settings-panel {
+                width: min(220px, 70vw);
+            }
         }
 
     </style>

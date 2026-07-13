@@ -3,6 +3,7 @@
  */
 export const AudioManager = {
   bgm: null,
+  bgmMuted: false,
   sounds: {},
 
   init() {
@@ -11,7 +12,10 @@ export const AudioManager = {
     this.bgm.loop = true;
     this.bgm.volume = 0.25; // Set ambient volume low so it isn't distracting
 
-    // 2. Pre-cache Short Sound Effects (SFX) into memory buffers
+    // 2. Restore persisted mute preference
+    this.bgmMuted = localStorage.getItem('omi_bgm_muted') === 'true';
+
+    // 3. Pre-cache Short Sound Effects (SFX) into memory buffers
     this.sounds.cardPlay = new Audio('/audio/card-slide.mp3');
     this.sounds.trickWin = new Audio('/audio/trick-win-2.mp3');
     this.sounds.victory = new Audio('/audio/match-victory.mp3');
@@ -25,6 +29,8 @@ export const AudioManager = {
   },
 
   startBGM() {
+    // Respect stored mute preference — don't auto-play if user muted
+    if (this.bgmMuted) return;
     if (this.bgm && this.bgm.paused) {
       this.bgm.play().catch(err => console.log("[AUDIO] Awaiting interaction to play BGM:", err));
     }
@@ -32,6 +38,22 @@ export const AudioManager = {
 
   stopBGM() {
     if (this.bgm) this.bgm.pause();
+  },
+
+  /** Mute background music only. SFX are never affected. */
+  muteBGM() {
+    this.bgmMuted = true;
+    localStorage.setItem('omi_bgm_muted', 'true');
+    if (this.bgm) this.bgm.pause();
+  },
+
+  /** Unmute and resume background music. SFX are never affected. */
+  unmuteBGM() {
+    this.bgmMuted = false;
+    localStorage.setItem('omi_bgm_muted', 'false');
+    if (this.bgm) {
+      this.bgm.play().catch(err => console.log("[AUDIO] Awaiting interaction to play BGM:", err));
+    }
   },
 
   playSFX(soundName) {

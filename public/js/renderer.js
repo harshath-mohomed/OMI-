@@ -127,6 +127,41 @@ export class Renderer {
     });
 
     this.setElementText('lobby-room-code', state.roomCode ? `ROOM ${state.roomCode}` : 'ROOM ----');
+
+    const countdownEl = document.getElementById('lobby-countdown');
+    if (countdownEl) {
+      if (typeof state.lobbyCountdown === 'number') {
+        countdownEl.innerText = `MATCH STARTS IN ${state.lobbyCountdown}...`;
+        countdownEl.classList.remove('hidden');
+      } else {
+        countdownEl.classList.add('hidden');
+      }
+    }
+
+    if (localPlayer) {
+      const motoNames = {
+        'ceaser': 'Ceaser',
+        'dagger-rose': 'Dagger Rose',
+        'diamonds-smile': 'Diamonds Smile',
+        'greek-sphinx': 'Greek Sphinx',
+        'robe': 'Robe',
+        'robot-golem': 'Robot Golem',
+        'rocket': 'Rocket',
+        'rouge': 'Rouge',
+        'shambling-zombie': 'Shambling Zombie',
+        'vampire-dracula': 'Vampire Dracula',
+        'winged-sword': 'Winged Sword',
+        'wolf-head': 'Wolf Head'
+      };
+
+      const motoId = localPlayer.motoId || 'wolf-head';
+      this.setElementText('lobby-moto-name', motoNames[motoId] || 'Wolf Head');
+
+      const motoIcon = document.getElementById('lobby-moto-icon');
+      if (motoIcon) {
+        motoIcon.src = `/src/icons/${motoId}.svg`;
+      }
+    }
   }
 
   updateMetadata(state, localSeat) {
@@ -139,8 +174,18 @@ export class Renderer {
     this.setElementText('display-connection-url', window.location.origin);
     this.setElementText('display-room', state.roomCode || 'Waiting...');
     this.setElementText('display-phase', state.phase || 'LOBBY');
-    this.setElementText('score-team-a', matchScores.A ?? 10);
-    this.setElementText('score-team-b', matchScores.B ?? 10);
+    const roundsWon = state.roundsWon || { A: 0, B: 0 };
+    const tokensWonA = 10 - (matchScores.B ?? 10);
+    const tokensWonB = 10 - (matchScores.A ?? 10);
+
+    const tokensWonBlack = 10 - (matchScores.B ?? 10); // Black drained Red
+    const tokensWonRed   = 10 - (matchScores.A ?? 10); // Red drained Black
+
+    this.setElementText('score-team-a', `${tokensWonBlack} / ${matchScores.A ?? 10}`); // left panel
+    this.setElementText('score-team-b', `${tokensWonRed} / ${matchScores.B ?? 10}`);   // right panel
+    this.setElementText('rounds-won-black', roundsWon.A ?? 0);
+    this.setElementText('rounds-won-red', roundsWon.B ?? 0);
+
     this.setElementText('team-a-label', this.formatTeamLabel(players, [0, 2], 'Team Black'));
     this.setElementText('team-b-label', this.formatTeamLabel(players, [1, 3], 'Team Red'));
 
@@ -152,10 +197,8 @@ export class Renderer {
     this.setElementText('score-tricks-black', `${roundTricks.A ?? 0} / 8`);
     this.setElementText('score-tricks-red', `${roundTricks.B ?? 0} / 8`);
 
-    const roundsWon = localTeam
-      ? Math.max(0, 10 - (matchScores[localTeam === 'A' ? 'B' : 'A'] ?? 10))
-      : Math.max(0, 10 - Math.min(matchScores.A ?? 10, matchScores.B ?? 10));
-    this.setElementText('total-rounds-win', `${roundsWon}/10`);
+    const localRoundsWon = localTeam ? (roundsWon[localTeam] ?? 0) : (roundsWon.A ?? 0);
+    this.setElementText('total-rounds-win', `${localRoundsWon}/10`);
 
     this.updateTeamStatusBars(state.activeTurnSeat, players);
     this.updateSeatLabels(state, localSeatIndex);
@@ -232,5 +275,90 @@ export class Renderer {
     if (diff === 1) return 'right';
     if (diff === 2) return 'top';
     if (diff === 3) return 'left';
+  }
+
+  renderMatchEnd(state, localSeat) {
+    const endData = state.matchEndData;
+    if (!endData) return;
+    
+    const stats = endData.stats;
+    const mvp = endData.mvp;
+    const players = state.players || [];
+    
+    const totalMatchTricks = stats.roundsPlayed * 8;
+    
+    this.setElementText('me-team-a-name', 'TEAM BLACK');
+    this.setElementText('me-team-b-name', 'TEAM RED');
+
+    this.setElementText('me-team-a-tricks', `${stats.totalTricks.A} / ${totalMatchTricks}`);
+    this.setElementText('me-team-b-tricks', `${stats.totalTricks.B} / ${totalMatchTricks}`);
+
+    [0, 1, 2, 3].forEach(seat => {
+      const p = players.find(player => player.seat === seat);
+      const nameEl = document.getElementById(`me-p${seat}-name`);
+      if (nameEl) {
+        nameEl.innerText = p ? p.username : `Player ${seat+1}`;
+        if (mvp && p && p.id === mvp.id) {
+          nameEl.classList.add('is-mvp');
+        } else {
+          nameEl.classList.remove('is-mvp');
+        }
+      }
+      this.setElementText(`me-p${seat}-tricks`, `${stats.playerTricks[seat] || 0} / ${totalMatchTricks}`);
+    });
+
+    this.setElementText('me-team-a-kapothi', stats.kapothiReceived.A);
+    this.setElementText('me-team-b-kapothi', stats.kapothiReceived.B);
+    
+    ['me-team-a-kapothi', 'me-team-b-kapothi'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('flash-red');
+        void el.offsetWidth;
+        el.classList.add('flash-red');
+      }
+    });
+
+    this.setElementText('me-total-kapothi', stats.kapothiReceived.A + stats.kapothiReceived.B);
+    this.setElementText('me-total-draws', stats.draws);
+
+    this.setElementText('me-team-a-rounds', `${stats.roundsWon.A} / ${stats.roundsPlayed}`);
+    this.setElementText('me-team-b-rounds', `${stats.roundsWon.B} / ${stats.roundsPlayed}`);
+    
+    const teamAEl = document.getElementById('me-team-a-rounds');
+    const teamBEl = document.getElementById('me-team-b-rounds');
+    const winnerNameEl = document.getElementById('me-winner-name');
+    
+    if (endData.winnerTeam === 'A') {
+      teamAEl?.classList.add('winner');
+      teamAEl?.classList.remove('loser');
+      teamBEl?.classList.add('loser');
+      teamBEl?.classList.remove('winner');
+      this.setElementText('me-winner-name', 'TEAM BLACK');
+      if (winnerNameEl) winnerNameEl.style.color = 'var(--cyan)';
+    } else if (endData.winnerTeam === 'B') {
+      teamBEl?.classList.add('winner');
+      teamBEl?.classList.remove('loser');
+      teamAEl?.classList.add('loser');
+      teamAEl?.classList.remove('winner');
+      this.setElementText('me-winner-name', 'TEAM RED');
+      if (winnerNameEl) winnerNameEl.style.color = 'var(--red)';
+    } else {
+      teamAEl?.classList.remove('winner', 'loser');
+      teamBEl?.classList.remove('winner', 'loser');
+      this.setElementText('me-winner-name', 'NONE');
+    }
+
+    if (mvp) {
+      this.setElementText('me-mvp-name', mvp.username);
+      this.setElementText('me-mvp-tricks', `${mvp.tricks_won} / ${totalMatchTricks}`);
+      this.setElementText('me-mvp-score', `${Math.round(mvp.score * 10) / 10} / 10`);
+      this.setElementText('me-mvp-kapothi', mvp.kapothi_dealt);
+      
+      const iconEl = document.getElementById('me-mvp-icon');
+      if (iconEl) {
+        iconEl.src = mvp.avatar_url || '/src/icons/wolf-head.svg';
+      }
+    }
   }
 }

@@ -20,6 +20,7 @@ export class MatchManager {
     this.dealer = new Dealer();
     this.scoreManager = new ScoreManager();
     this.roundManager = new RoundManager(this.players, this.scoreManager);
+    this.isResolvingTrick = false;
   }
 
   initializeMatch() {
@@ -118,6 +119,10 @@ export class MatchManager {
    */
   handleCardPlay(playerId, cardId) {
     if (this.phase !== CONFIG.GAME_PHASES.PLAYING) throw new Error('Illegal card play context.');
+    if (this.isResolvingTrick) {
+      this.emitCallback('MOVE_REJECTED', { playerId, reason: 'Wait for current trick to resolve.' });
+      return;
+    }
 
     const player = this.players.find(p => p.id === playerId);
     if (!player) throw new Error('Unknown player.');
@@ -132,20 +137,28 @@ export class MatchManager {
     }
 
     player.playCard(cardId);
+    const isTrickComplete = this.roundManager.executePlay(player, targetCard);
+    
     this.emitCallback('CARD_VALIDATED', { playerId, seat: player.seat, card: targetCard });
 
-    const result = this.roundManager.executePlay(player, targetCard);
+    if (isTrickComplete) {
+      this.isResolvingTrick = true;
+      setTimeout(() => {
+        const result = this.roundManager.resolveTrick();
+        this.emitCallback('TRICK_RESOLVED', result.trickResult);
 
-    if (result.isTrickComplete) {
-      this.emitCallback('TRICK_RESOLVED', result.trickResult);
+        if (result.isHandComplete) {
+          this.isResolvingTrick = false;
+          this.transitionTo(CONFIG.GAME_PHASES.HAND_END);
+          return;
+        }
+
+        this.isResolvingTrick = false;
+        this.notifyActiveTurn();
+      }, 1500);
+    } else {
+      this.notifyActiveTurn();
     }
-
-    if (result.isHandComplete) {
-      this.transitionTo(CONFIG.GAME_PHASES.HAND_END);
-      return;
-    }
-
-    this.notifyActiveTurn();
   }
 
   finishHand() {
@@ -165,9 +178,38 @@ export class MatchManager {
 
   finalizeMatchStats() {
     const finalWinner = this.scoreManager.checkMatchWinner();
+    const stats = this.scoreManager.getMatchEndStats();
+
+    let mvp = null;
+    let maxScore = -Infinity;
+
+    this.players.forEach(player => {
+      const team = player.team;
+      const tricksWon = stats.playerTricks[player.seat] || 0;
+      const roundsWon = stats.roundsWon[team] || 0;
+      const kapothiDealt = stats.playerKapothiDealt[player.seat] || 0;
+      const kapothiReceived = stats.playerKapothiReceived[player.seat] || 0;
+
+      const score = tricksWon * 3 + roundsWon * 2 + kapothiDealt * 1.5 - kapothiReceived;
+
+      if (score > maxScore) {
+        maxScore = score;
+        mvp = {
+          ...player.toJSON(),
+          tricks_won: tricksWon,
+          kapothi_dealt: kapothiDealt,
+          kapothi_received: kapothiReceived,
+          is_mvp: true,
+          score: score
+        };
+      }
+    });
+
     this.emitCallback('MATCH_COMPLETE_HERO', {
       winnerTeam: finalWinner,
-      scores: this.scoreManager.matchScores
+      scores: this.scoreManager.matchScores,
+      stats: stats,
+      mvp: mvp
     });
   }
 }

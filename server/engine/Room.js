@@ -18,6 +18,7 @@ export class Room {
     this.matchManager = null;
     this.lobbyCountdown = null;
     this.countdownInterval = null;
+    this.pendingTeamRequests = new Map(); // key: requestingPlayerId, value: { targetTeam, responses: Map, timeout }
   }
 
   /**
@@ -46,7 +47,7 @@ export class Room {
       return { role: 'SPECTATOR', message: 'Room full. Joined as spectator.' };
     }
 
-    playerInstance.seat = this.players.length;
+    playerInstance.seat = null; // Assigned manually via requestTeamJoin
     this.players.push(playerInstance);
     if (socket) this.connections.set(playerInstance.id, socket);
     return { role: 'PLAYER', isReconnect: false, seat: playerInstance.seat, player: playerInstance };
@@ -55,10 +56,12 @@ export class Room {
   removeClient(socketId) {
     const pIdx = this.players.findIndex(p => p.socketId === socketId);
     if (pIdx !== -1) {
-      this.players[pIdx].isDisconnected = true;
-      this.connections.delete(this.players[pIdx].id);
+      const player = this.players[pIdx];
+      player.isDisconnected = true;
+      this.connections.delete(player.id);
+      this.cancelPendingRequests(player.id);
       this.stopLobbyCountdown();
-      return { role: 'PLAYER', player: this.players[pIdx] };
+      return { role: 'PLAYER', player: player };
     }
 
     const sIdx = this.spectators.findIndex(s => s.socketId === socketId);
@@ -71,8 +74,10 @@ export class Room {
   }
 
   startMatch(ioNamespace) {
-    if (this.players.length !== 4) throw new Error('Requires exactly 4 players to start.');
+    const seatedActive = this.players.filter(p => p.seat !== null && !p.isDisconnected);
+    if (seatedActive.length !== 4) throw new Error('Requires exactly 4 seated players to start.');
 
+    this.cancelAllPendingRequests();
     this.stopLobbyCountdown();
 
     this.matchManager = new MatchManager(this.code, this.players, (evt, data) => {
@@ -90,8 +95,9 @@ export class Room {
     this.broadcastGameState();
 
     this.countdownInterval = setInterval(() => {
-      const activePlayers = this.players.filter(p => !p.isDisconnected);
-      if (this.players.length < 4 || activePlayers.length < 4) {
+      const seatedPlayers = this.players.filter(p => p.seat !== null);
+      const activeSeated = seatedPlayers.filter(p => !p.isDisconnected);
+      if (seatedPlayers.length < 4 || activeSeated.length < 4) {
         this.stopLobbyCountdown();
         this.broadcastGameState();
         return;
@@ -162,7 +168,10 @@ export class Room {
       players: this.players.map(p => p.toJSON()),
       spectatorCount: this.spectators.length,
       yourHand: playerInstance ? playerInstance.hand.map(c => c.toJSON()) : [],
-      lobbyCountdown: this.lobbyCountdown
+      lobbyCountdown: this.lobbyCountdown,
+      pendingTeamRequest: playerInstance && this.pendingTeamRequests.has(playerInstance.id) ? {
+        targetTeam: this.pendingTeamRequests.get(playerInstance.id).targetTeam
+      } : null
     };
 
     // If no match is running yet, return just the base lobby info safely
@@ -206,5 +215,173 @@ export class Room {
       })),
       matchEndData: this.matchManager.phase === 'MATCH_END' ? this.lastMatchEndData : null
     };
+  }
+
+  requestTeamJoin(playerId, team) {
+    if (this.matchManager) {
+      return { success: false, reason: 'Game has already started.' };
+    }
+
+    const requester = this.players.find(p => p.id === playerId);
+    if (!requester) {
+      return { success: false, reason: 'Player not found in room.' };
+    }
+
+    const targetSeats = team === 'A' ? [0, 2] : [1, 3];
+    const originalSeat = requester.seat;
+
+    if (originalSeat !== null && targetSeats.includes(originalSeat)) {
+      return { success: false, reason: 'You are already on this team.' };
+    }
+
+    const teamPlayers = this.players.filter(p => targetSeats.includes(p.seat));
+
+    if (teamPlayers.length < 2) {
+      const occupiedSeats = teamPlayers.map(p => p.seat);
+      const emptySeat = targetSeats.find(s => !occupiedSeats.includes(s));
+      
+      requester.seat = emptySeat;
+      this.cancelPendingRequests(playerId);
+      this.broadcastGameState();
+      return { success: true };
+    } else {
+      this.cancelPendingRequests(playerId);
+
+      const request = {
+        targetTeam: team,
+        responses: new Map(),
+        timeout: setTimeout(() => {
+          this.handleRequestTimeout(playerId);
+        }, 30000)
+      };
+
+      this.pendingTeamRequests.set(playerId, request);
+
+      teamPlayers.forEach(p => {
+        const socket = this.connections.get(p.id);
+        if (socket) {
+          socket.emit('teamJoinRequest', {
+            requestingPlayerId: playerId,
+            requestingPlayerName: requester.username,
+            targetTeam: team
+          });
+        }
+      });
+
+      this.broadcastGameState();
+      return { success: true, pending: true };
+    }
+  }
+
+  respondToTeamJoinRequest(responderId, requestingPlayerId, accept) {
+    const request = this.pendingTeamRequests.get(requestingPlayerId);
+    if (!request) return;
+
+    const requester = this.players.find(p => p.id === requestingPlayerId);
+    if (!requester) {
+      this.cancelPendingRequests(requestingPlayerId);
+      return;
+    }
+
+    const responder = this.players.find(p => p.id === responderId);
+    if (!responder) return;
+
+    if (accept) {
+      const otherTeam = request.targetTeam === 'A' ? 'B' : 'A';
+      const otherSeats = otherTeam === 'A' ? [0, 2] : [1, 3];
+      const otherTeamPlayers = this.players.filter(p => otherSeats.includes(p.seat));
+
+      if (otherTeamPlayers.length >= 2) {
+        const reqSocket = this.connections.get(requestingPlayerId);
+        if (reqSocket) {
+          reqSocket.emit('teamJoinRejected', { reason: 'Switch failed: the other team is full.' });
+        }
+        const respSocket = this.connections.get(responderId);
+        if (respSocket) {
+          respSocket.emit('illegalMove', { reason: 'Cannot switch: the other team is full.' });
+        }
+        this.cancelPendingRequests(requestingPlayerId);
+        this.broadcastGameState();
+        return;
+      }
+
+      const occupiedSeats = otherTeamPlayers.map(p => p.seat);
+      const emptySeat = otherSeats.find(s => !occupiedSeats.includes(s));
+
+      const oldResponderSeat = responder.seat;
+      responder.seat = emptySeat;
+      requester.seat = oldResponderSeat;
+
+      const reqSocket = this.connections.get(requestingPlayerId);
+      if (reqSocket) {
+        reqSocket.emit('teamJoinAccepted', { team: request.targetTeam, seat: requester.seat });
+      }
+
+      this.cancelPendingRequests(requestingPlayerId);
+      this.broadcastGameState();
+    } else {
+      request.responses.set(responderId, false);
+
+      const targetSeats = request.targetTeam === 'A' ? [0, 2] : [1, 3];
+      const teamPlayers = this.players.filter(p => targetSeats.includes(p.seat));
+      
+      const activeResponders = teamPlayers.filter(p => !p.isDisconnected);
+      const allRejected = activeResponders.every(p => request.responses.get(p.id) === false);
+
+      if (allRejected) {
+        const reqSocket = this.connections.get(requestingPlayerId);
+        if (reqSocket) {
+          reqSocket.emit('teamJoinRejected', { reason: 'Your request was rejected. Please join the other team.' });
+        }
+        this.cancelPendingRequests(requestingPlayerId);
+        this.broadcastGameState();
+      }
+    }
+  }
+
+  handleRequestTimeout(requestingPlayerId) {
+    const request = this.pendingTeamRequests.get(requestingPlayerId);
+    if (!request) return;
+
+    const reqSocket = this.connections.get(requestingPlayerId);
+    if (reqSocket) {
+      reqSocket.emit('teamJoinRejected', { reason: 'Request timed out. Please try again or join another team.' });
+    }
+    this.cancelPendingRequests(requestingPlayerId);
+    this.broadcastGameState();
+  }
+
+  cancelPendingRequests(playerId) {
+    const request = this.pendingTeamRequests.get(playerId);
+    if (request) {
+      if (request.timeout) {
+        clearTimeout(request.timeout);
+      }
+      this.pendingTeamRequests.delete(playerId);
+    }
+
+    for (const [reqId, req] of this.pendingTeamRequests.entries()) {
+      const targetSeats = req.targetTeam === 'A' ? [0, 2] : [1, 3];
+      const teamPlayers = this.players.filter(p => targetSeats.includes(p.seat));
+      if (teamPlayers.some(p => p.id === playerId)) {
+        const reqSocket = this.connections.get(reqId);
+        if (reqSocket) {
+          reqSocket.emit('teamJoinRejected', { reason: 'Team configuration changed. Request cancelled.' });
+        }
+        if (req.timeout) {
+          clearTimeout(req.timeout);
+        }
+        this.pendingTeamRequests.delete(reqId);
+      }
+    }
+  }
+
+  cancelAllPendingRequests() {
+    for (const request of this.pendingTeamRequests.values()) {
+      if (request.timeout) {
+        clearTimeout(request.timeout);
+      }
+    }
+    this.pendingTeamRequests.clear();
   }
 }

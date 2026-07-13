@@ -24,5 +24,10 @@ export const EVENTS = {
   SYNC_STATE: 'syncState',
   REMATCH: 'rematch',
   RETURN_HOME: 'returnHome',
-  SELECT_MOTO: 'selectMoto'
+  SELECT_MOTO: 'selectMoto',
+  REQUEST_TEAM_JOIN: 'requestTeamJoin',
+  RESPOND_TEAM_JOIN: 'respondTeamJoinRequest',
+  TEAM_JOIN_REQUEST: 'teamJoinRequest',
+  TEAM_JOIN_ACCEPTED: 'teamJoinAccepted',
+  TEAM_JOIN_REJECTED: 'teamJoinRejected'
 };

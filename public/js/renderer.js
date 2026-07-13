@@ -1,4 +1,12 @@
 /** State-Driven DOM Rendering Pipeline Engine Component. */
+
+const RANK_VALUES = {
+  'A': 8, 'K': 7, 'Q': 6, 'J': 5,
+  '10': 4, '9': 3, '8': 2, '7': 1
+};
+
+const SUIT_ORDER = ['HEARTS', 'DIAMONDS', 'CLUBS', 'SPADES'];
+
 export class Renderer {
   constructor() {
     this.handContainer = document.getElementById('player-hand-container');
@@ -30,8 +38,19 @@ export class Renderer {
     }
   }
 
-  renderHand(cards, isYourTurn) {
+  renderHand(cards, isYourTurn, trumpSuit) {
     this.handContainer.innerHTML = '';
+
+    if (trumpSuit) {
+      cards = [...cards].sort((a, b) => {
+        const suitOrder = (suit) => suit === trumpSuit ? 0 : 1;
+        if (suitOrder(a.suit) !== suitOrder(b.suit)) return suitOrder(a.suit) - suitOrder(b.suit);
+        if (a.suit !== b.suit) {
+          return SUIT_ORDER.indexOf(a.suit) - SUIT_ORDER.indexOf(b.suit);
+        }
+        return (RANK_VALUES[b.rank] ?? 0) - (RANK_VALUES[a.rank] ?? 0);
+      });
+    }
 
     for (let slot = 0; slot < this.handSize; slot += 1) {
       const card = cards[slot];
@@ -114,7 +133,7 @@ export class Renderer {
     return `/assets/SVG-cards-1.3/${rank}_of_${suit}${variantSuffix}.svg`;
   }
 
-  renderLobby(state) {
+  renderLobby(state, localPlayer) {
     const players = state.players || [];
     const seatLabels = [0, 2, 1, 3];
 
@@ -135,6 +154,54 @@ export class Renderer {
         countdownEl.classList.remove('hidden');
       } else {
         countdownEl.classList.add('hidden');
+      }
+    }
+
+    const btnBlack = document.getElementById('btn-join-black');
+    const btnRed = document.getElementById('btn-join-red');
+
+    if (btnBlack && btnRed) {
+      const teamAPlayers = players.filter(p => [0, 2].includes(p.seat));
+      const teamBPlayers = players.filter(p => [1, 3].includes(p.seat));
+
+      const isTeamAFull = teamAPlayers.length >= 2;
+      const isTeamBFull = teamBPlayers.length >= 2;
+
+      const hasSeat = localPlayer && localPlayer.seat !== null;
+      const currentTeam = localPlayer ? localPlayer.team : null;
+
+      // Handle Black Button
+      if (currentTeam === 'A') {
+        btnBlack.style.display = 'none';
+        btnBlack.disabled = true;
+      } else {
+        btnBlack.style.display = 'block';
+        if (state.pendingTeamRequest && state.pendingTeamRequest.targetTeam === 'A') {
+          btnBlack.innerText = 'PENDING...';
+          btnBlack.disabled = true;
+          btnBlack.className = 'join-team-btn play-action pending';
+        } else {
+          btnBlack.innerText = isTeamAFull ? 'FULL' : 'Join Black';
+          btnBlack.disabled = hasSeat;
+          btnBlack.className = 'join-team-btn play-action' + (isTeamAFull ? ' full' : '');
+        }
+      }
+
+      // Handle Red Button
+      if (currentTeam === 'B') {
+        btnRed.style.display = 'none';
+        btnRed.disabled = true;
+      } else {
+        btnRed.style.display = 'block';
+        if (state.pendingTeamRequest && state.pendingTeamRequest.targetTeam === 'B') {
+          btnRed.innerText = 'PENDING...';
+          btnRed.disabled = true;
+          btnRed.className = 'join-team-btn play-action pending';
+        } else {
+          btnRed.innerText = isTeamBFull ? 'FULL' : 'Join Red';
+          btnRed.disabled = hasSeat;
+          btnRed.className = 'join-team-btn play-action' + (isTeamBFull ? ' full' : '');
+        }
       }
     }
 
@@ -192,7 +259,17 @@ export class Renderer {
     const trumpDisplay = state.trumpSuit
       ? this.suitSymbols[state.trumpSuit]
       : '—';
-    this.setElementText('display-trump', trumpDisplay);
+    const trumpEl = document.getElementById('display-trump');
+    if (trumpEl) {
+      trumpEl.innerText = trumpDisplay;
+      if (state.trumpSuit === 'CLUBS' || state.trumpSuit === 'SPADES') {
+        trumpEl.style.color = '#000000';
+      } else if (state.trumpSuit === 'DIAMONDS' || state.trumpSuit === 'HEARTS') {
+        trumpEl.style.color = '#ff0000';
+      } else {
+        trumpEl.style.color = '';
+      }
+    }
 
     this.setElementText('score-tricks-black', `${roundTricks.A ?? 0} / 8`);
     this.setElementText('score-tricks-red', `${roundTricks.B ?? 0} / 8`);

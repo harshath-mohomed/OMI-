@@ -193,6 +193,30 @@ class GameClient {
       this.socket.emit('returnHome');
       this.showHomeScreen();
     });
+
+    document.getElementById('btn-join-black')?.addEventListener('click', () => {
+      this.socket.emit('requestTeamJoin', { team: 'A' });
+    });
+
+    document.getElementById('btn-join-red')?.addEventListener('click', () => {
+      this.socket.emit('requestTeamJoin', { team: 'B' });
+    });
+
+    document.getElementById('btn-accept-request')?.addEventListener('click', () => {
+      if (this.currentRequestingPlayerId) {
+        this.socket.emit('respondTeamJoinRequest', { requestingPlayerId: this.currentRequestingPlayerId, accept: true });
+        document.getElementById('team-request-modal')?.classList.add('hidden');
+        this.currentRequestingPlayerId = null;
+      }
+    });
+
+    document.getElementById('btn-reject-request')?.addEventListener('click', () => {
+      if (this.currentRequestingPlayerId) {
+        this.socket.emit('respondTeamJoinRequest', { requestingPlayerId: this.currentRequestingPlayerId, accept: false });
+        document.getElementById('team-request-modal')?.classList.add('hidden');
+        this.currentRequestingPlayerId = null;
+      }
+    });
   }
 
   appendChatMessage({ senderId, text, timestamp }) {
@@ -215,7 +239,35 @@ class GameClient {
       this.appendChatMessage(payload);
     });
 
+    this.socket.on('teamJoinRequest', ({ requestingPlayerId, requestingPlayerName, targetTeam }) => {
+      this.currentRequestingPlayerId = requestingPlayerId;
+      const msgEl = document.getElementById('team-request-message');
+      if (msgEl) {
+        msgEl.innerText = `${requestingPlayerName} wants to join your team. Would you like to switch to the other team?`;
+      }
+      document.getElementById('team-request-modal')?.classList.remove('hidden');
+    });
+
+    this.socket.on('teamJoinAccepted', ({ team, seat }) => {
+      document.getElementById('team-request-modal')?.classList.add('hidden');
+      this.currentRequestingPlayerId = null;
+    });
+
+    this.socket.on('teamJoinRejected', ({ reason }) => {
+      alert(reason);
+      document.getElementById('team-request-modal')?.classList.add('hidden');
+      this.currentRequestingPlayerId = null;
+    });
+
     this.socket.on('syncState', (state) => {
+      // Hide request modal if the requesting player is no longer in the room or if we are not in LOBBY phase
+      if (this.currentRequestingPlayerId) {
+        const stillInRoom = (state.players || []).some(p => p.id === this.currentRequestingPlayerId);
+        if (!stillInRoom || state.phase !== 'LOBBY') {
+          document.getElementById('team-request-modal')?.classList.add('hidden');
+          this.currentRequestingPlayerId = null;
+        }
+      }
       // 1. Capture the old state before we overwrite it
       const previousState = this.localState.currentGameState;
       
@@ -297,7 +349,7 @@ class GameClient {
       }
 
       const isYourTurn = state.activeTurnSeat === this.localState.seat && state.phase === 'PLAYING';
-      this.renderer.renderHand(state.yourHand || [], isYourTurn);
+      this.renderer.renderHand(state.yourHand || [], isYourTurn, state.trumpSuit);
       this.renderer.renderTrick(state.currentTrick || [], this.localState.seat);
       this.renderer.updateMetadata(state, this.localState.seat);
 

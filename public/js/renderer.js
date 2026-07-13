@@ -480,13 +480,19 @@ export class Renderer {
     if (state.phase === 'FULLCOAT_DECISION') {
       if (fullcoatOverlay) fullcoatOverlay.classList.remove('hidden');
 
-      const isChooser = state.trumpChooserId === localPlayer?.id;
-      if (isChooser && !state.fullcoatRequest) {
-        if (decisionCard) decisionCard.classList.remove('hidden');
-      } else if (state.fullcoatRequest) {
-        const partnerSeat = (state.players.find(p => p.id === state.trumpChooserId)?.seat + 2) % 4;
-        const isPartner = localPlayer?.seat === partnerSeat;
-
+      if (!state.fullcoatRequest) {
+        const isCurrentAsker = state.fullcoatCurrentAskerId === localPlayer?.id;
+        if (isCurrentAsker) {
+          if (decisionCard) decisionCard.classList.remove('hidden');
+        } else {
+          if (statusCard && statusText) {
+            const askerName = state.players?.find(p => p.id === state.fullcoatCurrentAskerId)?.username || 'Opponent';
+            statusText.innerText = `Waiting for ${askerName} to declare play...`;
+            statusCard.classList.remove('hidden');
+          }
+        }
+      } else {
+        const isPartner = state.fullcoatRequest.partnerId === localPlayer?.id;
         if (isPartner) {
           if (promptCard) promptCard.classList.remove('hidden');
         } else {
@@ -494,12 +500,6 @@ export class Renderer {
             statusText.innerText = `Waiting for ${state.fullcoatRequest.declarerName}'s partner to respond...`;
             statusCard.classList.remove('hidden');
           }
-        }
-      } else {
-        if (statusCard && statusText) {
-          const chooserName = state.players.find(p => p.id === state.trumpChooserId)?.username || 'Trump-caller';
-          statusText.innerText = `Waiting for ${chooserName} to declare play...`;
-          statusCard.classList.remove('hidden');
         }
       }
     }

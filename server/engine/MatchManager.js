@@ -29,6 +29,9 @@ export class MatchManager {
     this.fullcoatRequest = null;
     this.fullcoatExchange = null;
     this.fullcoatSummary = null;
+    this.fullcoatOpponents = [];        // The two opposing-team players
+    this.fullcoatCurrentAskerIndex = 0; // Which opponent is being asked (0 or 1)
+    this.fullcoatCurrentAskerId = null; // ID of the player currently seeing FULLCOAT/CONTINUE
   }
 
   initializeMatch() {
@@ -84,6 +87,9 @@ export class MatchManager {
     this.fullcoatRequest = null;
     this.fullcoatExchange = null;
     this.fullcoatSummary = null;
+    this.fullcoatOpponents = [];
+    this.fullcoatCurrentAskerIndex = 0;
+    this.fullcoatCurrentAskerId = null;
 
     this.dealer.prepareDeck();
     this.dealer.dealToAll(this.players, CONFIG.CARDS_PER_DEAL);
@@ -117,13 +123,21 @@ export class MatchManager {
 
     this.roundManager.setTrump(suit);
     this.emitCallback('TRUMP_SUIT_ANNOUNCED', { suit });
-    this.transitionTo(CONFIG.GAME_PHASES.FULLCOAT_DECISION);
+
+    // Determine the OPPOSING team (non-trump team) for Fullcoat decision
+    const trumpTeam = this.roundManager.trumpTeam; // 'A' (seats 0,2) or 'B' (seats 1,3)
+    const opponentSeats = trumpTeam === 'A' ? [1, 3] : [0, 2];
+    this.fullcoatOpponents = opponentSeats.map(seat => this.players.find(p => p.seat === seat));
+    this.fullcoatCurrentAskerIndex = 0;
+    this.fullcoatCurrentAskerId = this.fullcoatOpponents[0].id;
+
+    this.transitionTo(CONFIG.GAME_PHASES.SECOND_DEAL);
   }
 
   executeSecondDeal() {
     this.dealer.dealToAll(this.players, CONFIG.CARDS_PER_DEAL);
     this.emitCallback('SECOND_DEAL_COMPLETED', {});
-    this.transitionTo(CONFIG.GAME_PHASES.PLAYING);
+    this.transitionTo(CONFIG.GAME_PHASES.FULLCOAT_DECISION);
   }
 
   notifyActiveTurn() {

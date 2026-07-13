@@ -225,7 +225,9 @@ export class Room {
       fullcoatPartnerId: this.matchManager.fullcoatPartnerId,
       fullcoatRequest: this.matchManager.fullcoatRequest,
       fullcoatExchange: this.matchManager.fullcoatExchange,
-      fullcoatSummary: this.matchManager.fullcoatSummary
+      fullcoatSummary: this.matchManager.fullcoatSummary,
+      fullcoatOpponents: this.matchManager.fullcoatOpponents?.map(p => p.id) ?? [],
+      fullcoatCurrentAskerId: this.matchManager.fullcoatCurrentAskerId
     };
   }
 

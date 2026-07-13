@@ -19,17 +19,26 @@ export function registerGameplayHandlers(io, socket, engine) {
       if (matchManager.phase !== 'FULLCOAT_DECISION') {
         throw new Error('Invalid phase for declaring Fullcoat.');
       }
-      if (matchManager.roundManager.trumpChooser.id !== socket.data.playerId) {
-        throw new Error('Only the trump caller can choose Fullcoat.');
+      if (matchManager.fullcoatCurrentAskerId !== socket.data.playerId) {
+        throw new Error('It is not your turn to decide on Fullcoat.');
       }
 
       if (action === 'continue') {
-        matchManager.transitionTo('SECOND_DEAL');
+        if (matchManager.fullcoatCurrentAskerIndex === 0 && matchManager.fullcoatOpponents.length > 1) {
+          matchManager.fullcoatCurrentAskerIndex = 1;
+          matchManager.fullcoatCurrentAskerId = matchManager.fullcoatOpponents[1].id;
+          room.broadcastGameState();
+        } else {
+          matchManager.transitionTo('PLAYING');
+        }
       } else if (action === 'fullcoat') {
-        const declarer = matchManager.roundManager.trumpChooser;
+        const declarer = matchManager.players.find(p => p.id === socket.data.playerId);
+        const partner = matchManager.fullcoatOpponents.find(p => p.id !== socket.data.playerId);
+        
         matchManager.fullcoatRequest = {
           declarerId: declarer.id,
-          declarerName: declarer.username
+          declarerName: declarer.username,
+          partnerId: partner.id
         };
         room.broadcastGameState();
       } else {
@@ -48,21 +57,18 @@ export function registerGameplayHandlers(io, socket, engine) {
       if (matchManager.phase !== 'FULLCOAT_DECISION' || !matchManager.fullcoatRequest) {
         throw new Error('No active Fullcoat request to respond to.');
       }
-      const partnerSeat = (matchManager.roundManager.trumpChooser.seat + 2) % 4;
-      const partner = matchManager.players.find(p => p.seat === partnerSeat);
-      if (!partner || partner.id !== socket.data.playerId) {
+      if (matchManager.fullcoatRequest.partnerId !== socket.data.playerId) {
         throw new Error('Only the partner can respond to the Fullcoat request.');
       }
 
       if (!accept) {
         io.to(room.code).emit('fullcoat_rejected', { declarerName: matchManager.fullcoatRequest.declarerName });
         matchManager.fullcoatRequest = null;
-        matchManager.transitionTo('SECOND_DEAL');
+        matchManager.transitionTo('PLAYING');
       } else {
-        const declarer = matchManager.roundManager.trumpChooser;
         matchManager.isFullcoatActive = true;
-        matchManager.fullcoatDeclarerId = declarer.id;
-        matchManager.fullcoatPartnerId = partner.id;
+        matchManager.fullcoatDeclarerId = matchManager.fullcoatRequest.declarerId;
+        matchManager.fullcoatPartnerId = matchManager.fullcoatRequest.partnerId;
         matchManager.fullcoatExchange = {
           confirmed: {}
         };
@@ -122,7 +128,7 @@ export function registerGameplayHandlers(io, socket, engine) {
         matchManager.fullcoatExchange = null;
 
         io.to(room.code).emit('fullcoat_exchange_done');
-        matchManager.transitionTo('SECOND_DEAL');
+        matchManager.transitionTo('PLAYING');
       } else {
         room.broadcastGameState();
       }

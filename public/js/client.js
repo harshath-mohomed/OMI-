@@ -173,8 +173,9 @@ class GameClient {
 
       const gameState = this.localState.currentGameState;
       const isExchanger = gameState && gameState.isFullcoatActive &&
-                          (this.socket.id === gameState.fullcoatDeclarerId ||
-                           this.socket.id === gameState.fullcoatPartnerId);
+                          (this.localState.player &&
+                           (this.localState.player.id === gameState.fullcoatDeclarerId ||
+                            this.localState.player.id === gameState.fullcoatPartnerId));
 
       if (gameState && gameState.phase === 'FULLCOAT_EXCHANGE' && isExchanger) {
         const idx = this.selectedExchangeCards.indexOf(cardId);
@@ -184,7 +185,7 @@ class GameClient {
           this.selectedExchangeCards.push(cardId);
         }
 
-        this.renderer.renderHand(gameState.yourHand || [], false, gameState.trumpSuit, this.selectedExchangeCards);
+        this.renderer.renderHand(gameState.yourHand || [], true, gameState.trumpSuit, this.selectedExchangeCards);
 
         const confirmBtn = document.getElementById('btn-fullcoat-exchange-confirm');
         if (confirmBtn) {
@@ -411,8 +412,15 @@ class GameClient {
         this.selectedExchangeCards = [];
       }
 
-      const isYourTurn = state.activeTurnSeat === this.localState.seat && state.phase === 'PLAYING';
-      this.renderer.renderHand(state.yourHand || [], isYourTurn, state.trumpSuit, this.selectedExchangeCards);
+      const isExchanger = state.isFullcoatActive &&
+                          (this.localState.player &&
+                           (this.localState.player.id === state.fullcoatDeclarerId ||
+                            this.localState.player.id === state.fullcoatPartnerId));
+
+      const isHandInteractable = (state.activeTurnSeat === this.localState.seat && state.phase === 'PLAYING') ||
+                                 (state.phase === 'FULLCOAT_EXCHANGE' && isExchanger);
+
+      this.renderer.renderHand(state.yourHand || [], isHandInteractable, state.trumpSuit, this.selectedExchangeCards);
       this.renderer.renderTrick(state.currentTrick || [], this.localState.seat);
       this.renderer.updateMetadata(state, this.localState.seat);
       this.renderer.renderFullcoat(state, this.localState.player, this.selectedExchangeCards);

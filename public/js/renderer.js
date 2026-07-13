@@ -4,6 +4,22 @@ export class Renderer {
     this.handContainer = document.getElementById('player-hand-container');
     this.trickMat = document.getElementById('trick-mat');
     this.suitSymbols = { HEARTS: '♥', DIAMONDS: '♦', CLUBS: '♣', SPADES: '♠' };
+    this.rankNameMap = {
+      A: 'ace',
+      K: 'king',
+      Q: 'queen',
+      J: 'jack',
+      '10': '10',
+      '9': '9',
+      '8': '8',
+      '7': '7'
+    };
+    this.suitNameMap = {
+      HEARTS: 'hearts',
+      DIAMONDS: 'diamonds',
+      CLUBS: 'clubs',
+      SPADES: 'spades'
+    };
     this.handSize = 8;
   }
 
@@ -23,13 +39,10 @@ export class Renderer {
       if (card) {
         const cardEl = document.createElement('div');
         const isRed = card.suit === 'HEARTS' || card.suit === 'DIAMONDS';
-        cardEl.className = `hand-slot filled card-element ${isRed ? 'red-suit' : 'black-suit'}`;
+        const assetPath = this.getCardAssetPath(card);
+        cardEl.className = `hand-slot filled card-element ${isRed ? 'red-suit' : 'black-suit'} ${assetPath ? 'asset-card' : ''}`;
         cardEl.dataset.cardId = card.id;
-        cardEl.innerHTML = `
-          <div class="text-left text-sm">${card.rank}</div>
-          <div class="text-center text-2xl">${this.suitSymbols[card.suit]}</div>
-          <div class="text-right text-sm">${card.rank}</div>
-        `;
+        cardEl.innerHTML = this.getCardFaceMarkup(card, assetPath);
 
         if (!isYourTurn) {
           cardEl.classList.add('disabled');
@@ -68,18 +81,37 @@ export class Renderer {
 
     currentTrick.forEach((play) => {
       const slot = slotMap[play.seat] || 'bottom';
-      const isRed = play.card.suit === 'HEARTS' || play.card.suit === 'DIAMONDS';
+      const assetPath = this.getCardAssetPath(play.card);
       const cardEl = document.createElement('div');
-      cardEl.className = `card-element absolute ${slotStyles[slot]} w-14 h-20 bg-white rounded-md shadow-lg flex flex-col justify-between p-2 font-bold ${
-        isRed ? 'text-red-600' : 'text-gray-900'
-      }`;
-      cardEl.innerHTML = `
-        <div class="text-left text-xs">${play.card.rank}</div>
-        <div class="text-center text-lg">${this.suitSymbols[play.card.suit]}</div>
-        <div class="text-right text-xs">${play.card.rank}</div>
-      `;
+      cardEl.className = `card-element trick-card absolute ${slotStyles[slot]} w-14 h-20 rounded-md shadow-lg overflow-hidden bg-white ${assetPath ? 'asset-card' : ''}`;
+      cardEl.innerHTML = this.getCardFaceMarkup(play.card, assetPath);
       this.trickMat.appendChild(cardEl);
     });
+  }
+
+  getCardFaceMarkup(card, assetPath = this.getCardAssetPath(card)) {
+    if (!assetPath) {
+      return `
+        <div class="text-left text-sm">${card.rank}</div>
+        <div class="text-center text-2xl">${this.suitSymbols[card.suit] || ''}</div>
+        <div class="text-right text-sm">${card.rank}</div>
+      `;
+    }
+
+    return `<img src="${assetPath}" alt="${card.rank} of ${card.suit}" class="card-face-asset" draggable="false" />`;
+  }
+
+  getCardAssetPath(card) {
+    if (!card || !card.rank || !card.suit) return null;
+
+    const rank = this.rankNameMap[card.rank];
+    const suit = this.suitNameMap[card.suit];
+    if (!rank || !suit) return null;
+
+    const useVariantTwo = card.rank === 'J' || card.rank === 'Q' || card.rank === 'K';
+    const variantSuffix = useVariantTwo ? '2' : '';
+
+    return `/assets/SVG-cards-1.3/${rank}_of_${suit}${variantSuffix}.svg`;
   }
 
   renderLobby(state) {

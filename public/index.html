@@ -1219,14 +1219,21 @@
             </div>
 
             <aside class="scoreboard-panel frosted-panel flex flex-col gap-3" aria-label="Scoreboard">
-                <!-- Header row — full width, centered -->
-                <div class="text-center">
-                    <div class="text-[0.62rem] font-bold tracking-wider uppercase text-gray-400">TOTAL ROUNDS WIN</div>
-                    <div class="flex justify-center items-center gap-3 mt-1 text-base font-bold">
-                        <span id="rounds-won-black" class="text-right w-12 text-white">0</span>
-                        <span class="text-gray-600 font-normal text-xs">|</span>
-                        <span id="rounds-won-red" class="text-left w-12 text-white">0</span>
+                <!-- Header row — grid of three columns -->
+                <div class="grid grid-cols-3 items-center text-center">
+                    <!-- Left side -->
+                    <div class="font-bold text-xs text-white tracking-widest">BLACK</div>
+                    <!-- Center -->
+                    <div class="flex flex-col items-center">
+                        <div class="text-[0.62rem] font-bold tracking-wider uppercase text-gray-400">TOTAL ROUNDS WIN</div>
+                        <div class="flex justify-center items-center gap-3 mt-1 text-base font-bold">
+                            <span id="rounds-won-black" class="text-right w-12 text-white">0</span>
+                            <span class="text-gray-600 font-normal text-xs">|</span>
+                            <span id="rounds-won-red" class="text-left w-12 text-white">0</span>
+                        </div>
                     </div>
+                    <!-- Right side -->
+                    <div class="font-bold text-xs text-red-600 tracking-widest">RED</div>
                 </div>
 
                 <div class="scoreboard-divider-h" style="height: 1px; background: rgba(255, 255, 255, 0.15); margin: 2px 0;" aria-hidden="true"></div>
@@ -1255,11 +1262,11 @@
                 <!-- Team label and Trick wins rows -->
                 <div class="grid grid-cols-3 items-center text-center">
                     <!-- Team Label Left -->
-                    <div class="font-bold text-xs text-white tracking-widest">BLACK</div>
+                    <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">tricks</div>
                     <!-- Team Label Center -->
                     <div class="text-[0.58rem] uppercase tracking-wider text-gray-500 whitespace-nowrap">trick wins</div>
                     <!-- Team Label Right -->
-                    <div class="font-bold text-xs text-red-600 tracking-widest">RED</div>
+                    <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">tricks</div>
                 </div>
 
                 <div class="grid grid-cols-3 items-center text-center mt-0.5">

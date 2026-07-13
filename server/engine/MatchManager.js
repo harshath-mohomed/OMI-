@@ -69,6 +69,12 @@ export class MatchManager {
     const chooser = this.players.find(p => p.seat === chooserSeat);
     this.roundManager.startNewRound(chooser);
 
+    this.blindTrumpState = {
+      status: null,
+      revealedCard: null,
+      chosenIndex: null
+    };
+
     this.emitCallback('FIRST_DEAL_COMPLETED', {
       dealerSeat: this.dealer.dealerSeat,
       chooserId: chooser.id
@@ -82,6 +88,43 @@ export class MatchManager {
       chooserId: this.roundManager.trumpChooser.id,
       chooserSeat: this.roundManager.trumpChooser.seat
     });
+  }
+
+  startBlindTrump(playerId) {
+    if (this.phase !== CONFIG.GAME_PHASES.TRUMP_SELECTION) throw new Error('Invalid phase.');
+    if (this.roundManager.trumpChooser.id !== playerId) throw new Error('Unauthorized action.');
+    if (this.blindTrumpState.status !== null) throw new Error('Blind trump already started.');
+
+    this.blindTrumpState.status = 'STARTED';
+    this.emitCallback('blindTrumpStarted', {
+      chooserId: this.roundManager.trumpChooser.id,
+      chooserName: this.roundManager.trumpChooser.username
+    });
+  }
+
+  revealBlindTrump(playerId, index) {
+    if (this.phase !== CONFIG.GAME_PHASES.TRUMP_SELECTION) throw new Error('Invalid phase.');
+    if (this.roundManager.trumpChooser.id !== playerId) throw new Error('Unauthorized action.');
+    if (this.blindTrumpState.status !== 'STARTED') throw new Error('Blind trump not started.');
+    if (index < 0 || index > 3) throw new Error('Invalid card index.');
+
+    // Chooser's second 4 cards are the first 4 cards currently remaining in the deck
+    const chooserCards = this.dealer.deck.cards.slice(0, 4);
+    const selectedCard = chooserCards[index];
+    if (!selectedCard) throw new Error('Selected card not found.');
+
+    this.blindTrumpState.status = 'SELECTED';
+    this.blindTrumpState.revealedCard = selectedCard;
+    this.blindTrumpState.chosenIndex = index;
+
+    this.roundManager.setTrump(selectedCard.suit);
+
+    this.emitCallback('blindTrumpSelected', {
+      revealedCard: selectedCard.toJSON(),
+      trumpSuit: selectedCard.suit
+    });
+
+    this.transitionTo(CONFIG.GAME_PHASES.SECOND_DEAL);
   }
 
   /**

@@ -108,6 +108,7 @@ class GameClient {
 
     if (!username) return alert('NAME required');
 
+    this.localUsername = username;
     AudioManager.startBGM();
 
     this.socket.emit('joinRoom', { username, roomCode, asSpectator: false });
@@ -156,12 +157,23 @@ class GameClient {
       }
     });
 
-    document.querySelectorAll('#trump-modal button').forEach(btn => {
+    document.querySelectorAll('#trump-modal .trump-suit-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const suit = e.target.dataset.suit;
+        const suit = e.currentTarget.dataset.suit;
         this.socket.emit('chooseTrump', { suit });
         document.getElementById('trump-modal').classList.add('hidden');
       });
+    });
+
+    document.getElementById('btn-blind-trump-modal')?.addEventListener('click', () => {
+      this.socket.emit('chooseBlindTrump');
+      document.getElementById('trump-modal').classList.add('hidden');
+    });
+
+    document.getElementById('trump-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'trump-modal') {
+        document.getElementById('trump-modal').classList.add('hidden');
+      }
     });
 
     document.getElementById('player-hand-container').addEventListener('click', (e) => {
@@ -237,6 +249,24 @@ class GameClient {
   bindSocketEvents() {
     this.socket.on('chatMessage', (payload) => {
       this.appendChatMessage(payload);
+    });
+
+    this.socket.on('blindTrumpStarted', ({ chooserId, chooserName }) => {
+      this.appendChatMessage({
+        senderId: null,
+        text: `${chooserName} is selecting Blind Trump...`,
+        timestamp: Date.now()
+      });
+    });
+
+    this.socket.on('blindTrumpSelected', ({ revealedCard, trumpSuit }) => {
+      const suitsMap = { HEARTS: '♥', DIAMONDS: '♦', CLUBS: '♣', SPADES: '♠' };
+      const symbol = suitsMap[trumpSuit] || trumpSuit;
+      this.appendChatMessage({
+        senderId: null,
+        text: `Blind Trump revealed: ${revealedCard.rank}${symbol} (Trump = ${trumpSuit})`,
+        timestamp: Date.now()
+      });
     });
 
     this.socket.on('teamJoinRequest', ({ requestingPlayerId, requestingPlayerName, targetTeam }) => {
@@ -330,7 +360,7 @@ class GameClient {
 
       // 4. Continue with your standard UI mapping properties
       const playerList = state.players || [];
-      const identity = playerList.find(p => p.id === this.socket.id || p.username === document.getElementById('input-username').value.trim());
+      const identity = playerList.find(p => p.id === this.socket.id || p.username === this.localUsername || p.username === document.getElementById('input-username').value.trim());
 
       if (identity) {
         this.localState.seat = identity.seat;
@@ -353,15 +383,148 @@ class GameClient {
       this.renderer.renderTrick(state.currentTrick || [], this.localState.seat);
       this.renderer.updateMetadata(state, this.localState.seat);
 
-      const trumpModal = document.getElementById('trump-modal');
-      const chooserSeat = state.trumpChooserId
-        ? (state.players || []).find(p => p.id === state.trumpChooserId)?.seat
-        : null;
-
-      if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
-        trumpModal.classList.remove('hidden');
+      // ── Blind card dismiss timer ──
+      // Uses a permanent flag so that once dismissed, no future syncState can re-show it.
+      if (state.blindTrumpState && state.blindTrumpState.status === 'SELECTED') {
+        const isChooserForTimer = state.trumpChooserId === this.socket.id || (this.localState.player && state.trumpChooserId === this.localState.player.id);
+        if (isChooserForTimer) {
+          const cardId = state.blindTrumpState.revealedCard.id;
+          // Only start timer once per unique revealed card
+          if (this._blindDismissCardId !== cardId) {
+            this._blindDismissCardId = cardId;
+            this._blindCardDismissed = false;
+            if (this._blindDismissTimer) clearTimeout(this._blindDismissTimer);
+            this._blindDismissTimer = setTimeout(() => {
+              this._blindCardDismissed = true;
+              const ctrl = document.getElementById('trump-chooser-controls');
+              if (ctrl) {
+                ctrl.classList.add('blind-row-exit');
+                setTimeout(() => {
+                  ctrl.classList.add('hidden');
+                  ctrl.classList.remove('blind-row-exit');
+                  ctrl.innerHTML = '';
+                }, 350);
+              }
+            }, 4000); // 4 seconds, then fade out
+          }
+        }
       } else {
-        trumpModal.classList.add('hidden');
+        // New round — reset everything
+        this._blindDismissCardId = null;
+        this._blindCardDismissed = false;
+        if (this._blindDismissTimer) { clearTimeout(this._blindDismissTimer); this._blindDismissTimer = null; }
+      }
+
+      const trumpModal = document.getElementById('trump-modal');
+      const chooserControls = document.getElementById('trump-chooser-controls');
+      const gameStatusBanner = document.getElementById('game-status-banner');
+      const gameStatusText = document.getElementById('game-status-text');
+      const isChooser = state.trumpChooserId === this.socket.id || (this.localState.player && state.trumpChooserId === this.localState.player.id);
+
+      if (state.phase === 'TRUMP_SELECTION') {
+        const chooser = (state.players || []).find(p => p.id === state.trumpChooserId);
+        const chooserName = chooser ? chooser.username : 'Chooser';
+
+        if (isChooser) {
+          if (gameStatusBanner) gameStatusBanner.classList.add('hidden');
+          const blindStatus = state.blindTrumpState ? state.blindTrumpState.status : null;
+
+          if (blindStatus === null) {
+            if (chooserControls) chooserControls.classList.add('hidden');
+            trumpModal?.classList.remove('hidden');
+          } else if (blindStatus === 'STARTED') {
+            trumpModal?.classList.add('hidden');
+            if (chooserControls) {
+              chooserControls.classList.remove('hidden');
+              chooserControls.innerHTML = `
+                <div class="text-[0.65rem] font-bold tracking-widest text-center text-gray-400 uppercase mb-1">Blind Trump Selection</div>
+                <div class="flex gap-2">
+                  <div class="card-back" data-index="0"></div>
+                  <div class="card-back" data-index="1"></div>
+                  <div class="card-back" data-index="2"></div>
+                  <div class="card-back" data-index="3"></div>
+                </div>
+              `;
+              chooserControls.querySelectorAll('.card-back').forEach(el => {
+                el.addEventListener('click', (e) => {
+                  const index = parseInt(e.currentTarget.dataset.index, 10);
+                  this.socket.emit('selectBlindTrumpCard', { index });
+                });
+              });
+            }
+          } else if (blindStatus === 'SELECTED') {
+            trumpModal?.classList.add('hidden');
+            // If already dismissed, keep it hidden forever
+            if (this._blindCardDismissed) {
+              if (chooserControls) chooserControls.classList.add('hidden');
+            } else {
+              if (chooserControls) {
+                chooserControls.classList.remove('hidden');
+                const chosenIdx = state.blindTrumpState.chosenIndex;
+                const card = state.blindTrumpState.revealedCard;
+                const isRed = card.suit === 'HEARTS' || card.suit === 'DIAMONDS';
+                const assetPath = this.renderer.getCardAssetPath(card);
+                let cardsHTML = '';
+                for (let i = 0; i < 4; i++) {
+                  if (i === chosenIdx) {
+                    cardsHTML += `
+                      <div class="hand-slot filled asset-card ${isRed ? 'red-suit' : 'black-suit'}" style="width: 56px; height: 80px; font-size: 0.8rem; transform: none; cursor: default;">
+                        ${this.renderer.getCardFaceMarkup(card, assetPath)}
+                      </div>`;
+                  } else {
+                    cardsHTML += `<div class="card-back" style="pointer-events: none; opacity: 0.6;"></div>`;
+                  }
+                }
+                chooserControls.innerHTML = `
+                  <div class="text-[0.65rem] font-bold tracking-widest text-center text-gray-400 uppercase mb-1">Revealed Card</div>
+                  <div class="flex gap-2">${cardsHTML}</div>`;
+              }
+            }
+          }
+        } else {
+          if (chooserControls) chooserControls.classList.add('hidden');
+          trumpModal?.classList.add('hidden');
+          if (gameStatusBanner && gameStatusText) {
+            gameStatusBanner.classList.remove('hidden');
+            const blindStatus = state.blindTrumpState ? state.blindTrumpState.status : null;
+            if (blindStatus === 'STARTED') {
+              gameStatusText.innerText = `${chooserName} is selecting Blind Trump...`;
+            } else {
+              gameStatusText.innerText = `Waiting for ${chooserName} to select trump...`;
+            }
+          }
+        }
+      } else {
+        trumpModal?.classList.add('hidden');
+        if (gameStatusBanner) gameStatusBanner.classList.add('hidden');
+
+        // After TRUMP_SELECTION phase ends: show revealed card only if not yet dismissed
+        const hasSelectedBlind = state.blindTrumpState && state.blindTrumpState.status === 'SELECTED';
+        if (isChooser && hasSelectedBlind && !this._blindCardDismissed) {
+          if (chooserControls) {
+            chooserControls.classList.remove('hidden');
+            const chosenIdx = state.blindTrumpState.chosenIndex;
+            const card = state.blindTrumpState.revealedCard;
+            const isRed = card.suit === 'HEARTS' || card.suit === 'DIAMONDS';
+            const assetPath = this.renderer.getCardAssetPath(card);
+            let cardsHTML = '';
+            for (let i = 0; i < 4; i++) {
+              if (i === chosenIdx) {
+                cardsHTML += `
+                  <div class="hand-slot filled asset-card ${isRed ? 'red-suit' : 'black-suit'}" style="width: 56px; height: 80px; font-size: 0.8rem; transform: none; cursor: default;">
+                    ${this.renderer.getCardFaceMarkup(card, assetPath)}
+                  </div>`;
+              } else {
+                cardsHTML += `<div class="card-back" style="pointer-events: none; opacity: 0.6;"></div>`;
+              }
+            }
+            chooserControls.innerHTML = `
+              <div class="text-[0.65rem] font-bold tracking-widest text-center text-gray-400 uppercase mb-1">Revealed Card</div>
+              <div class="flex gap-2">${cardsHTML}</div>`;
+          }
+        } else {
+          if (chooserControls) chooserControls.classList.add('hidden');
+        }
       }
 
       // Removed auto startMatch emission as match start is now countdown-driven from the server

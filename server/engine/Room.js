@@ -213,6 +213,11 @@ export class Room {
         seat: t.player.seat,
         card: t.card.toJSON()
       })),
+      blindTrumpState: this.matchManager.blindTrumpState ? {
+        status: this.matchManager.blindTrumpState.status,
+        revealedCard: this.matchManager.blindTrumpState.revealedCard ? this.matchManager.blindTrumpState.revealedCard.toJSON() : null,
+        chosenIndex: this.matchManager.blindTrumpState.chosenIndex
+      } : null,
       matchEndData: this.matchManager.phase === 'MATCH_END' ? this.lastMatchEndData : null
     };
   }

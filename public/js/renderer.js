@@ -256,9 +256,16 @@ export class Renderer {
     this.setElementText('team-a-label', this.formatTeamLabel(players, [0, 2], 'Team Black'));
     this.setElementText('team-b-label', this.formatTeamLabel(players, [1, 3], 'Team Red'));
 
-    const trumpDisplay = state.trumpSuit
-      ? this.suitSymbols[state.trumpSuit]
-      : '—';
+    let trumpDisplay = '—';
+    if (state.trumpSuit) {
+      const symbol = this.suitSymbols[state.trumpSuit] || '';
+      if (state.blindTrumpState && state.blindTrumpState.revealedCard) {
+        trumpDisplay = `${state.blindTrumpState.revealedCard.rank}${symbol}`;
+      } else {
+        trumpDisplay = symbol;
+      }
+    }
+
     const trumpEl = document.getElementById('display-trump');
     if (trumpEl) {
       trumpEl.innerText = trumpDisplay;
@@ -268,6 +275,15 @@ export class Renderer {
         trumpEl.style.color = '#ff0000';
       } else {
         trumpEl.style.color = '';
+      }
+    }
+
+    const trumpLabelEl = document.querySelector('.trump-panel .trump-label');
+    if (trumpLabelEl) {
+      if (state.blindTrumpState && state.blindTrumpState.status === 'SELECTED') {
+        trumpLabelEl.innerText = 'blind trump';
+      } else {
+        trumpLabelEl.innerText = 'selected trump';
       }
     }
 

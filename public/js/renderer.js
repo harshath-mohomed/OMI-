@@ -1,4 +1,12 @@
 /** State-Driven DOM Rendering Pipeline Engine Component. */
+
+const RANK_VALUES = {
+  'A': 8, 'K': 7, 'Q': 6, 'J': 5,
+  '10': 4, '9': 3, '8': 2, '7': 1
+};
+
+const SUIT_ORDER = ['HEARTS', 'DIAMONDS', 'CLUBS', 'SPADES'];
+
 export class Renderer {
   constructor() {
     this.handContainer = document.getElementById('player-hand-container');
@@ -30,8 +38,19 @@ export class Renderer {
     }
   }
 
-  renderHand(cards, isYourTurn) {
+  renderHand(cards, isYourTurn, trumpSuit) {
     this.handContainer.innerHTML = '';
+
+    if (trumpSuit) {
+      cards = [...cards].sort((a, b) => {
+        const suitOrder = (suit) => suit === trumpSuit ? 0 : 1;
+        if (suitOrder(a.suit) !== suitOrder(b.suit)) return suitOrder(a.suit) - suitOrder(b.suit);
+        if (a.suit !== b.suit) {
+          return SUIT_ORDER.indexOf(a.suit) - SUIT_ORDER.indexOf(b.suit);
+        }
+        return (RANK_VALUES[b.rank] ?? 0) - (RANK_VALUES[a.rank] ?? 0);
+      });
+    }
 
     for (let slot = 0; slot < this.handSize; slot += 1) {
       const card = cards[slot];

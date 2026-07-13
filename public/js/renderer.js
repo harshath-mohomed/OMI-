@@ -192,7 +192,17 @@ export class Renderer {
     const trumpDisplay = state.trumpSuit
       ? this.suitSymbols[state.trumpSuit]
       : '—';
-    this.setElementText('display-trump', trumpDisplay);
+    const trumpEl = document.getElementById('display-trump');
+    if (trumpEl) {
+      trumpEl.innerText = trumpDisplay;
+      if (state.trumpSuit === 'CLUBS' || state.trumpSuit === 'SPADES') {
+        trumpEl.style.color = '#000000';
+      } else if (state.trumpSuit === 'DIAMONDS' || state.trumpSuit === 'HEARTS') {
+        trumpEl.style.color = '#dc2626';
+      } else {
+        trumpEl.style.color = '';
+      }
+    }
 
     this.setElementText('score-tricks-black', `${roundTricks.A ?? 0} / 8`);
     this.setElementText('score-tricks-red', `${roundTricks.B ?? 0} / 8`);

@@ -152,7 +152,7 @@ export class MatchManager {
 
     const declarer = this.players.find(p => p.id === this.fullcoatDeclarerId);
     this.roundManager.activeTurnSeat = declarer.seat;
-    console.log('Fullcoat trump selected. Setting activeTurnSeat to:', declarer.seat);
+    //console.log('Fullcoat trump selected. Setting activeTurnSeat to:', declarer.seat);
 
     this.transitionTo(CONFIG.GAME_PHASES.PLAYING);
   }
@@ -164,6 +164,10 @@ export class MatchManager {
   }
 
   notifyActiveTurn() {
+    let guard = 0;
+    while (this.players.find(p => p.seat === this.roundManager.activeTurnSeat)?.isOut && guard++ < 4) {
+      this.roundManager.activeTurnSeat = (this.roundManager.activeTurnSeat + 1) % 4;
+    }
     const activePlayer = this.players.find(p => p.seat === this.roundManager.activeTurnSeat);
     this.emitCallback('YOUR_TURN_NOTIFICATION', {
       playerId: activePlayer.id,

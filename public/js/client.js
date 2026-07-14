@@ -160,7 +160,8 @@ class GameClient {
     document.querySelectorAll('#trump-modal button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const suit = e.target.dataset.suit;
-    console.log('Trump button clicked, suit:', suit, 'phase:', this.localState.currentGameState?.phase);        this.socket.emit('chooseTrump', { suit });
+    //console.log('Trump button clicked, suit:', suit, 'phase:', this.localState.currentGameState?.phase);       
+     this.socket.emit('chooseTrump', { suit });
         document.getElementById('trump-modal').classList.add('hidden');
       });
     });
@@ -219,8 +220,10 @@ class GameClient {
 
     document.getElementById('btn-fullcoat-exchange-confirm')?.addEventListener('click', () => {
       if (this.selectedExchangeCards.length === 2) {
-        this.socket.emit('confirmFullcoatExchange', { cardIds: this.selectedExchangeCards });
+        this.socket.emit('confirmFullcoatExchange', { cardIds: [...this.selectedExchangeCards] });
+        this.selectedExchangeCards = [];
         document.getElementById('btn-fullcoat-exchange-confirm')?.classList.add('hidden');
+        document.querySelectorAll('.exchange-selected').forEach(el => el.classList.remove('exchange-selected'));
       }
     });
 
@@ -425,19 +428,19 @@ class GameClient {
       this.renderer.updateMetadata(state, this.localState.seat);
       this.renderer.renderFullcoat(state, this.localState.player, this.selectedExchangeCards);
 
-      const trumpModal = document.getElementById('trump-modal');
-      const chooserSeat = state.trumpChooserId
-        ? (state.players || []).find(p => p.id === state.trumpChooserId)?.seat
-        : null;
+     const trumpModal = document.getElementById('trump-modal');
+const chooserSeat = state.trumpChooserId
+  ? (state.players || []).find(p => p.id === state.trumpChooserId)?.seat
+  : null;
 
-      const isFullcoatTrumpPhase = state.phase === 'FULLCOAT_TRUMP_SELECTION' &&
-      this.localState.player?.id === state.fullcoatDeclarerId;
-
-      if ((state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) || isFullcoatTrumpPhase) {
-        trumpModal.classList.remove('hidden');
-      } else {
-        trumpModal.classList.add('hidden');
-      }
+if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
+  trumpModal.classList.remove('hidden');
+} else if (state.phase === 'FULLCOAT_TRUMP_SELECTION' &&
+           state.fullcoatDeclarerId === this.localState.player?.id) {
+  trumpModal.classList.remove('hidden');
+} else {
+  trumpModal.classList.add('hidden');
+}
 
       // Removed auto startMatch emission as match start is now countdown-driven from the server
     });

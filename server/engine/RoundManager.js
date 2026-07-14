@@ -82,6 +82,11 @@ export class RoundManager {
     this.currentTrick = [];
     this.leadSuit = null;
     this.activeTurnSeat = winner.seat;
+
+    let guard = 0;
+  while (this.players.find(p => p.seat === this.activeTurnSeat)?.isOut && guard++ < 4) {
+    this.activeTurnSeat = (this.activeTurnSeat + 1) % 4;
+  }
     const isHandComplete = this.tricksPlayed >= CONFIG.TRICKS_PER_HAND;
 
     return {

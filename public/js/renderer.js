@@ -322,17 +322,8 @@ export class Renderer {
       element.classList.toggle('active-turn', isActive);
 
       let overlay = element.querySelector('.sitting-out-overlay');
-      if (player && player.isOut) {
-        if (!overlay) {
-          overlay = document.createElement('div');
-          overlay.className = 'sitting-out-overlay';
-          overlay.innerHTML = '<span class="sitting-out-badge">Sitting out</span>';
-          element.appendChild(overlay);
-        }
-      } else {
-        if (overlay) {
-          overlay.remove();
-        }
+      if (overlay) {
+        overlay.remove();
       }
 
       if (relativePosition === 'bottom') continue;
@@ -570,22 +561,8 @@ export class Renderer {
     }
 
     let handOverlay = document.getElementById('hand-sitting-out-overlay');
-    if (localPlayer && localPlayer.isOut) {
-      if (!handOverlay) {
-        handOverlay = document.createElement('div');
-        handOverlay.id = 'hand-sitting-out-overlay';
-        handOverlay.className = 'hand-sitting-out-overlay';
-        handOverlay.innerHTML = '<span class="hand-sitting-out-badge">Sitting out</span>';
-        const handWrap = document.getElementById('player-hand-container');
-        if (handWrap) {
-          handWrap.style.position = 'relative';
-          handWrap.appendChild(handOverlay);
-        }
-      }
-    } else {
-      if (handOverlay) {
-        handOverlay.remove();
-      }
+    if (handOverlay) {
+      handOverlay.remove();
     }
   }
 }

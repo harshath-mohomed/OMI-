@@ -126,8 +126,8 @@ export function registerGameplayHandlers(io, socket, engine) {
         declarer.addCards(pCards);
         partner.addCards(dCards);
 
-        partner.isOut = true;
         partner.clearHand();
+        partner.isOut = true;
 
         matchManager.fullcoatRequest = null;
         matchManager.fullcoatExchange = null;
@@ -145,6 +145,7 @@ export function registerGameplayHandlers(io, socket, engine) {
   socket.on(EVENTS.PLAY_CARD, ({ cardId }) => {
     const room = engine.getRoom(socket.data.roomCode);
     if (!room || !room.matchManager) return;
+
     try {
       room.matchManager.handleCardPlay(socket.data.playerId, cardId);
     } catch (err) {

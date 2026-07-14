@@ -160,7 +160,7 @@ class GameClient {
     document.querySelectorAll('#trump-modal button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const suit = e.target.dataset.suit;
-        this.socket.emit('chooseTrump', { suit });
+    console.log('Trump button clicked, suit:', suit, 'phase:', this.localState.currentGameState?.phase);        this.socket.emit('chooseTrump', { suit });
         document.getElementById('trump-modal').classList.add('hidden');
       });
     });
@@ -430,7 +430,10 @@ class GameClient {
         ? (state.players || []).find(p => p.id === state.trumpChooserId)?.seat
         : null;
 
-      if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
+      const isFullcoatTrumpPhase = state.phase === 'FULLCOAT_TRUMP_SELECTION' &&
+      this.localState.player?.id === state.fullcoatDeclarerId;
+
+      if ((state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) || isFullcoatTrumpPhase) {
         trumpModal.classList.remove('hidden');
       } else {
         trumpModal.classList.add('hidden');

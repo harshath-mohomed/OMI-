@@ -2,14 +2,19 @@ import { EVENTS } from '../utilities/constants.js';
 
 export function registerGameplayHandlers(io, socket, engine) {
   socket.on(EVENTS.CHOOSE_TRUMP, ({ suit }) => {
-    const room = engine.getRoom(socket.data.roomCode);
-    if (!room || !room.matchManager) return;
-    try {
+  const room = engine.getRoom(socket.data.roomCode);
+    console.log('CHOOSE_TRUMP received, phase:', room?.matchManager?.phase, 'suit:', suit);
+  if (!room || !room.matchManager) return;
+  try {
+    if (room.matchManager.phase === 'FULLCOAT_TRUMP_SELECTION') {
+      room.matchManager.selectFullcoatTrump(socket.data.playerId, suit);
+    } else {
       room.matchManager.selectTrump(socket.data.playerId, suit);
-    } catch (err) {
-      socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
     }
-  });
+  } catch (err) {
+    socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
+  }
+});
 
   socket.on('declareFullcoat', ({ action }) => {
     const room = engine.getRoom(socket.data.roomCode);
@@ -128,7 +133,7 @@ export function registerGameplayHandlers(io, socket, engine) {
         matchManager.fullcoatExchange = null;
 
         io.to(room.code).emit('fullcoat_exchange_done');
-        matchManager.transitionTo('PLAYING');
+        matchManager.transitionTo('FULLCOAT_TRUMP_SELECTION');
       } else {
         room.broadcastGameState();
       }

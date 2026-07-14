@@ -535,7 +535,18 @@ export class Renderer {
         }
       }
     }
-
+    if (state.phase === 'FULLCOAT_TRUMP_SELECTION') {
+  const isDeclarerLocal = localPlayer?.id === state.fullcoatDeclarerId;
+  if (!isDeclarerLocal) {
+    if (fullcoatOverlay) fullcoatOverlay.classList.remove('hidden');
+    if (statusCard && statusText) {
+      const declarer = state.players?.find(p => p.id === state.fullcoatDeclarerId);
+      statusText.innerText = `Waiting for ${declarer?.username || 'declarer'} to choose trump...`;
+      statusCard.classList.remove('hidden');
+    }
+  }
+  // declarer: overlay stays hidden, trump modal renders on top unblocked
+}
     if (state.phase === 'ROUND_END' && state.fullcoatSummary) {
       if (roundModal) {
         const titleEl = document.getElementById('fullcoat-round-title');

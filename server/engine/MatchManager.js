@@ -61,6 +61,9 @@ export class MatchManager {
       case CONFIG.GAME_PHASES.ROUND_END:
         // Wait for player interactions / timers
         break;
+      case CONFIG.GAME_PHASES.FULLCOAT_TRUMP_SELECTION:
+      this.promptFullcoatTrumpSelection();
+        break;
       case CONFIG.GAME_PHASES.SECOND_DEAL:
         this.executeSecondDeal();
         break;
@@ -132,6 +135,26 @@ export class MatchManager {
     this.fullcoatCurrentAskerId = this.fullcoatOpponents[0].id;
 
     this.transitionTo(CONFIG.GAME_PHASES.SECOND_DEAL);
+  }
+
+  promptFullcoatTrumpSelection() {
+    this.emitCallback('PROMPT_FULLCOAT_TRUMP_SELECTION', {
+      declarerId: this.fullcoatDeclarerId
+    });
+  }
+
+  selectFullcoatTrump(playerId, suit) {
+    if (this.phase !== 'FULLCOAT_TRUMP_SELECTION') throw new Error('Invalid phase.');
+    if (this.fullcoatDeclarerId !== playerId) throw new Error('Only the Fullcoat declarer can re-select trump.');
+
+    this.roundManager.setTrump(suit);
+    this.emitCallback('TRUMP_SUIT_ANNOUNCED', { suit });
+
+    const declarer = this.players.find(p => p.id === this.fullcoatDeclarerId);
+    this.roundManager.activeTurnSeat = declarer.seat;
+    console.log('Fullcoat trump selected. Setting activeTurnSeat to:', declarer.seat);
+
+    this.transitionTo(CONFIG.GAME_PHASES.PLAYING);
   }
 
   executeSecondDeal() {

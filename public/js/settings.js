@@ -6,6 +6,7 @@
  * music mute/unmute; designed for easy extension with future settings
  * (SFX toggle, theme selection, language, notifications).
  */
+import { LanguageEngine } from './lang.js';
 export const SettingsManager = {
   /** @type {import('./audio.js').AudioManager|null} */
   _audio: null,
@@ -25,6 +26,7 @@ export const SettingsManager = {
     this._audio = audioManager;
     this._createDOM();
     this._bindEvents();
+    LanguageEngine.applyTranslations(); // Apply initial language local storage state
     this.repositionForScreen('home');
   },
 
@@ -96,7 +98,7 @@ export const SettingsManager = {
     const header = document.createElement('div');
     header.className = 'settings-panel-header';
     header.innerHTML = `
-      <span class="settings-panel-title">SETTINGS</span>
+      <span class="settings-panel-title" data-translate="settingsTitle">${LanguageEngine.get('settingsTitle')}</span>
       <button class="settings-panel-close" aria-label="Close settings">&times;</button>
     `;
     panel.appendChild(header);
@@ -115,10 +117,22 @@ export const SettingsManager = {
       <button class="settings-toggle-btn" id="settings-bgm-toggle" aria-label="Toggle background music">
         <span class="settings-toggle-icon" id="settings-bgm-icon">${isMuted ? '🔇' : '🔊'}</span>
       </button>
-      <span class="settings-toggle-label" id="settings-bgm-label">${isMuted ? 'Muted' : 'Music On'}</span>
+      <span class="settings-toggle-label" id="settings-bgm-label">${isMuted ? LanguageEngine.get('muted') : LanguageEngine.get('musicOn')}</span>
     `;
     panel.appendChild(row);
 
+    const currentLang = LanguageEngine.currentLang;
+    const langRow = document.createElement('div');
+    langRow.className = 'settings-row';
+    langRow.id = 'settings-row-lang';
+    langRow.innerHTML = `
+      <button class="settings-toggle-btn" id="settings-lang-toggle" aria-label="Toggle language">
+        <span class="settings-toggle-icon" id="settings-lang-icon">🌐</span>
+      </button>
+      <span class="settings-toggle-label" id="settings-lang-label">${currentLang.toUpperCase()}</span>
+    `;
+    panel.appendChild(langRow);
+    
     document.body.appendChild(panel);
     this._panelEl = panel;
   },
@@ -157,6 +171,12 @@ export const SettingsManager = {
     document.getElementById('settings-bgm-toggle')?.addEventListener('click', (e) => {
       e.stopPropagation();
       this._toggleBGM();
+    });
+
+    //lang toggle
+    document.getElementById('settings-lang-toggle')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this._toggleLanguage();
     });
   },
 
@@ -200,11 +220,32 @@ export const SettingsManager = {
     if (this._audio.bgmMuted) {
       this._audio.unmuteBGM();
       if (iconEl) iconEl.textContent = '🔊';
-      if (labelEl) labelEl.textContent = 'Music On';
+      if (labelEl) labelEl.textContent = LanguageEngine.get('musicOn');
     } else {
       this._audio.muteBGM();
       if (iconEl) iconEl.textContent = '🔇';
-      if (labelEl) labelEl.textContent = 'Muted';
+      if (labelEl) labelEl.textContent = LanguageEngine.get('muted');
     }
+  },
+  
+  _toggleLanguage() {
+    const nextLang = LanguageEngine.currentLang === 'en' ? 'si' : 'en';
+    LanguageEngine.setLanguage(nextLang);
+    
+    // Update labels inside settings panel instantly
+    const labelEl = document.getElementById('settings-lang-label');
+    if (labelEl) labelEl.textContent = nextLang.toUpperCase();
+
+    // Update BGM label to match new language
+    const bgmLabelEl = document.getElementById('settings-bgm-label');
+    if (bgmLabelEl) {
+      const isMuted = this._audio?.bgmMuted ?? false;
+      bgmLabelEl.textContent = isMuted ? LanguageEngine.get('muted') : LanguageEngine.get('musicOn');
+    }
+    
+    // Force renderer updates for structural layouts (Lobby titles, status boxes)
+    window.dispatchEvent(new Event('languageChanged'));
   }
 };
+
+

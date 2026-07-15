@@ -3,7 +3,6 @@ import { EVENTS } from '../utilities/constants.js';
 export function registerGameplayHandlers(io, socket, engine) {
   socket.on(EVENTS.CHOOSE_TRUMP, ({ suit }) => {
   const room = engine.getRoom(socket.data.roomCode);
-    console.log('CHOOSE_TRUMP received, phase:', room?.matchManager?.phase, 'suit:', suit);
   if (!room || !room.matchManager) return;
   try {
     if (room.matchManager.phase === 'FULLCOAT_TRUMP_SELECTION') {

@@ -16,7 +16,7 @@ export class MatchManager {
     this.players = players; // Array length exactly 4 verified at room level
     this.emitCallback = emitCallback;
     this.phase = CONFIG.GAME_PHASES.MATCH_START;
-    
+
     this.dealer = new Dealer();
     this.scoreManager = new ScoreManager();
     this.roundManager = new RoundManager(this.players, this.scoreManager);
@@ -32,6 +32,7 @@ export class MatchManager {
     this.fullcoatOpponents = [];        // The two opposing-team players
     this.fullcoatCurrentAskerIndex = 0; // Which opponent is being asked (0 or 1)
     this.fullcoatCurrentAskerId = null; // ID of the player currently seeing FULLCOAT/CONTINUE
+    this.fullcoatFailed = false;        // Explicit tracking for Full Count failure state
   }
 
   initializeMatch() {
@@ -62,7 +63,7 @@ export class MatchManager {
         // Wait for player interactions / timers
         break;
       case CONFIG.GAME_PHASES.FULLCOAT_TRUMP_SELECTION:
-      this.promptFullcoatTrumpSelection();
+        this.promptFullcoatTrumpSelection();
         break;
       case CONFIG.GAME_PHASES.SECOND_DEAL:
         this.executeSecondDeal();
@@ -93,6 +94,7 @@ export class MatchManager {
     this.fullcoatOpponents = [];
     this.fullcoatCurrentAskerIndex = 0;
     this.fullcoatCurrentAskerId = null;
+    this.fullcoatFailed = false;
 
     this.dealer.prepareDeck();
     this.dealer.dealToAll(this.players, CONFIG.CARDS_PER_DEAL);
@@ -152,8 +154,6 @@ export class MatchManager {
 
     const declarer = this.players.find(p => p.id === this.fullcoatDeclarerId);
     this.roundManager.activeTurnSeat = declarer.seat;
-    //console.log('Fullcoat trump selected. Setting activeTurnSeat to:', declarer.seat);
-
     this.transitionTo(CONFIG.GAME_PHASES.PLAYING);
   }
 
@@ -202,7 +202,7 @@ export class MatchManager {
 
     player.playCard(cardId);
     const isTrickComplete = this.roundManager.executePlay(player, targetCard);
-    
+
     this.emitCallback('CARD_VALIDATED', { playerId, seat: player.seat, card: targetCard });
 
     if (isTrickComplete) {
@@ -211,9 +211,25 @@ export class MatchManager {
         const result = this.roundManager.resolveTrick();
         this.emitCallback('TRICK_RESOLVED', result.trickResult);
 
+        if (this.isFullcoatActive) {
+          const declarer = this.players.find(p => p.id === this.fullcoatDeclarerId);
+          const fullcoatTeam = declarer ? declarer.team : null;
+          const trickWinnerTeam = result.trickResult.winningTeam;
+          if (fullcoatTeam && trickWinnerTeam !== fullcoatTeam) {
+            this.fullcoatFailed = true;
+            this.isResolvingTrick = false;
+            if (this.phase === CONFIG.GAME_PHASES.PLAYING) {
+              this.transitionTo(CONFIG.GAME_PHASES.HAND_END);
+            }
+            return;
+          }
+        }
+
         if (result.isHandComplete) {
           this.isResolvingTrick = false;
-          this.transitionTo(CONFIG.GAME_PHASES.HAND_END);
+          if (this.phase === CONFIG.GAME_PHASES.PLAYING) {
+            this.transitionTo(CONFIG.GAME_PHASES.HAND_END);
+          }
           return;
         }
 
@@ -226,7 +242,14 @@ export class MatchManager {
   }
 
   finishHand() {
-    const SummaryData = this.scoreManager.finalizeHand(this.roundManager.trumpTeam, this.isFullcoatActive);
+    const declarer = this.players.find(p => p.id === this.fullcoatDeclarerId);
+    const fullcoatDeclarerTeam = declarer ? declarer.team : null;
+    const SummaryData = this.scoreManager.finalizeHand(
+      this.roundManager.trumpTeam,
+      this.isFullcoatActive,
+      fullcoatDeclarerTeam,
+      this.fullcoatFailed
+    );
 
     this.emitCallback('ROUND_OVER_SUMMARY', SummaryData);
 

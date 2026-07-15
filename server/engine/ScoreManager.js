@@ -39,21 +39,22 @@ export class ScoreManager {
    * Finalizes a hand and transfers score tokens according to OMI rules.
    * @param {string} trumpTeam
    * @param {boolean} isFullcoatActive
+   * @param {string|null} fullcoatDeclarerTeam
+   * @param {boolean} fullcoatFailed
    * @returns {Object}
    */
-  finalizeHand(trumpTeam, isFullcoatActive = false) {
+  finalizeHand(trumpTeam, isFullcoatActive = false, fullcoatDeclarerTeam = null, fullcoatFailed = false) {
     this.matchStats.roundsPlayed++;
     const teamA = this.roundTricks.A;
     const teamB = this.roundTricks.B;
 
     if (isFullcoatActive) {
-      const declarerTeam = trumpTeam;
+      const declarerTeam = fullcoatDeclarerTeam || (trumpTeam === 'A' ? 'B' : 'A');
       const opponentTeam = declarerTeam === 'A' ? 'B' : 'A';
-      const declarerTricks = this.roundTricks[declarerTeam];
 
       let winningTeam, losingTeam, allocatedPoints, isFullcoatWin;
 
-      if (declarerTricks === 8) {
+      if (!fullcoatFailed) {
         // Fullcoat Win: Declarer team wins all tricks -> +3 tokens (deduct 3 from opponent score)
         winningTeam = declarerTeam;
         losingTeam = opponentTeam;
@@ -77,7 +78,7 @@ export class ScoreManager {
         allocatedPoints,
         basePoints: 3,
         bonusPoints: 0,
-        isKaputhi: declarerTricks === 8,
+        isKaputhi: !fullcoatFailed,
         isHanging: false,
         isFullcoat: true,
         isFullcoatWin,
@@ -123,15 +124,15 @@ export class ScoreManager {
 
     // Tokens are ONLY deducted from losing team, never added to winning team
     this.matchScores[losingTeam] -= allocatedPoints;
-    
+
     this.matchStats.roundsWon[winningTeam]++;
 
     if (isKaputhi) {
       this.matchStats.kapothiReceived[losingTeam]++;
-      
+
       const winningSeats = winningTeam === 'A' ? [0, 2] : [1, 3];
       const losingSeats = losingTeam === 'A' ? [0, 2] : [1, 3];
-      
+
       winningSeats.forEach(seat => this.matchStats.playerKapothiDealt[seat]++);
       losingSeats.forEach(seat => this.matchStats.playerKapothiReceived[seat]++);
     }
@@ -158,7 +159,7 @@ export class ScoreManager {
     if (this.matchScores.A === 0) return 'B';
     return null;
   }
-  
+
   getMatchEndStats() {
     return this.matchStats;
   }

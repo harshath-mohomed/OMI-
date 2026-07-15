@@ -91,11 +91,11 @@ export class Renderer {
     const slotMap = localSeat === null || localSeat === undefined
       ? { 0: 'bottom', 1: 'right', 2: 'top', 3: 'left' }
       : {
-          [(localSeat + 0) % 4]: 'bottom',
-          [(localSeat + 1) % 4]: 'right',
-          [(localSeat + 2) % 4]: 'top',
-          [(localSeat + 3) % 4]: 'left'
-        };
+        [(localSeat + 0) % 4]: 'bottom',
+        [(localSeat + 1) % 4]: 'right',
+        [(localSeat + 2) % 4]: 'top',
+        [(localSeat + 3) % 4]: 'left'
+      };
 
     const slotStyles = {
       top: 'top-0 left-1/2 -translate-x-1/2',
@@ -252,7 +252,7 @@ export class Renderer {
     const tokensWonB = 10 - (matchScores.A ?? 10);
 
     const tokensWonBlack = 10 - (matchScores.B ?? 10); // Black drained Red
-    const tokensWonRed   = 10 - (matchScores.A ?? 10); // Red drained Black
+    const tokensWonRed = 10 - (matchScores.A ?? 10); // Red drained Black
 
     this.setElementText('score-team-a', `${tokensWonBlack} / ${matchScores.A ?? 10}`); // left panel
     this.setElementText('score-team-b', `${tokensWonRed} / ${matchScores.B ?? 10}`);   // right panel
@@ -368,13 +368,13 @@ export class Renderer {
   renderMatchEnd(state, localSeat) {
     const endData = state.matchEndData;
     if (!endData) return;
-    
+
     const stats = endData.stats;
     const mvp = endData.mvp;
     const players = state.players || [];
-    
+
     const totalMatchTricks = stats.roundsPlayed * 8;
-    
+
     this.setElementText('me-team-a-name', 'TEAM BLACK');
     this.setElementText('me-team-b-name', 'TEAM RED');
 
@@ -385,7 +385,7 @@ export class Renderer {
       const p = players.find(player => player.seat === seat);
       const nameEl = document.getElementById(`me-p${seat}-name`);
       if (nameEl) {
-        nameEl.innerText = p ? p.username : `Player ${seat+1}`;
+        nameEl.innerText = p ? p.username : `Player ${seat + 1}`;
         if (mvp && p && p.id === mvp.id) {
           nameEl.classList.add('is-mvp');
         } else {
@@ -397,7 +397,7 @@ export class Renderer {
 
     this.setElementText('me-team-a-kapothi', stats.kapothiReceived.A);
     this.setElementText('me-team-b-kapothi', stats.kapothiReceived.B);
-    
+
     ['me-team-a-kapothi', 'me-team-b-kapothi'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
@@ -412,11 +412,11 @@ export class Renderer {
 
     this.setElementText('me-team-a-rounds', `${stats.roundsWon.A} / ${stats.roundsPlayed}`);
     this.setElementText('me-team-b-rounds', `${stats.roundsWon.B} / ${stats.roundsPlayed}`);
-    
+
     const teamAEl = document.getElementById('me-team-a-rounds');
     const teamBEl = document.getElementById('me-team-b-rounds');
     const winnerNameEl = document.getElementById('me-winner-name');
-    
+
     if (endData.winnerTeam === 'A') {
       teamAEl?.classList.add('winner');
       teamAEl?.classList.remove('loser');
@@ -442,7 +442,7 @@ export class Renderer {
       this.setElementText('me-mvp-tricks', `${mvp.tricks_won} / ${totalMatchTricks}`);
       this.setElementText('me-mvp-score', `${Math.round(mvp.score * 10) / 10} / 10`);
       this.setElementText('me-mvp-kapothi', mvp.kapothi_dealt);
-      
+
       const iconEl = document.getElementById('me-mvp-icon');
       if (iconEl) {
         iconEl.src = mvp.avatar_url || '/src/icons/wolf-head.svg';
@@ -527,34 +527,45 @@ export class Renderer {
       }
     }
     if (state.phase === 'FULLCOAT_TRUMP_SELECTION') {
-  const isDeclarerLocal = localPlayer?.id === state.fullcoatDeclarerId;
-  if (!isDeclarerLocal) {
-    if (fullcoatOverlay) fullcoatOverlay.classList.remove('hidden');
-    if (statusCard && statusText) {
-      const declarer = state.players?.find(p => p.id === state.fullcoatDeclarerId);
-      statusText.innerText = `Waiting for ${declarer?.username || 'declarer'} to choose trump...`;
-      statusCard.classList.remove('hidden');
+      const isDeclarerLocal = localPlayer?.id === state.fullcoatDeclarerId;
+      if (!isDeclarerLocal) {
+        if (fullcoatOverlay) fullcoatOverlay.classList.remove('hidden');
+        if (statusCard && statusText) {
+          const declarer = state.players?.find(p => p.id === state.fullcoatDeclarerId);
+          statusText.innerText = `Waiting for ${declarer?.username || 'declarer'} to choose trump...`;
+          statusCard.classList.remove('hidden');
+        }
+      }
+      // declarer: overlay stays hidden, trump modal renders on top unblocked
     }
-  }
-  // declarer: overlay stays hidden, trump modal renders on top unblocked
-}
     if (state.phase === 'ROUND_END' && state.fullcoatSummary) {
       if (roundModal) {
         const titleEl = document.getElementById('fullcoat-round-title');
         const bodyEl = document.getElementById('fullcoat-round-body');
-        
+
+        const declarer = state.players?.find(p => p.id === state.fullcoatDeclarerId);
+        const declarerTeam = declarer?.team;
+        const isMyTeamDeclarer = (localPlayer && declarerTeam && localPlayer.team === declarerTeam);
+        const points = state.fullcoatSummary.points;
+
         if (state.fullcoatSummary.win) {
-          if (titleEl) {
-            titleEl.innerText = 'FULLCOAT WIN';
-            titleEl.style.color = '#00f7ff';
+          // Declaring team won all tricks
+          if (isMyTeamDeclarer) {
+            if (titleEl) { titleEl.innerText = 'FULLCOAT Successful!'; titleEl.style.color = '#00f7ff'; }
+            if (bodyEl) { bodyEl.innerText = `+${points} Tokens`; }
+          } else {
+            if (titleEl) { titleEl.innerText = 'Opponent FULLCOAT Successful.'; titleEl.style.color = '#ff0a0a'; }
+            if (bodyEl) { bodyEl.innerText = `-${points} Tokens`; }
           }
-          if (bodyEl) bodyEl.innerText = `+${state.fullcoatSummary.points} TOKENS`;
         } else {
-          if (titleEl) {
-            titleEl.innerText = 'FULLCOAT FAIL';
-            titleEl.style.color = '#ff0a0a';
+          // Declaring team lost a trick
+          if (isMyTeamDeclarer) {
+            if (titleEl) { titleEl.innerText = 'FULLCOAT Failed!'; titleEl.style.color = '#ff0a0a'; }
+            if (bodyEl) { bodyEl.innerHTML = `You lost a trick.<br>-${points} Tokens`; }
+          } else {
+            if (titleEl) { titleEl.innerText = 'Opponent FULLCOAT Failed!'; titleEl.style.color = '#00f7ff'; }
+            if (bodyEl) { bodyEl.innerText = `+${points} Tokens`; }
           }
-          if (bodyEl) bodyEl.innerText = `−${state.fullcoatSummary.points} TOKENS`;
         }
         roundModal.classList.remove('hidden');
       }

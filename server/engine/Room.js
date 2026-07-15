@@ -227,7 +227,13 @@ export class Room {
       fullcoatExchange: this.matchManager.fullcoatExchange,
       fullcoatSummary: this.matchManager.fullcoatSummary,
       fullcoatOpponents: this.matchManager.fullcoatOpponents?.map(p => p.id) ?? [],
-      fullcoatCurrentAskerId: this.matchManager.fullcoatCurrentAskerId
+      fullcoatCurrentAskerId: this.matchManager.fullcoatCurrentAskerId,
+      blindTrumpState: this.matchManager.blindTrumpState ? {
+        status: this.matchManager.blindTrumpState.status,
+        revealedCard: this.matchManager.blindTrumpState.revealedCard ? this.matchManager.blindTrumpState.revealedCard.toJSON() : null,
+        chosenIndex: this.matchManager.blindTrumpState.chosenIndex
+      } : null,
+      matchEndData: this.matchManager.phase === 'MATCH_END' ? this.lastMatchEndData : null
     };
   }
 

@@ -141,6 +141,26 @@ export function registerGameplayHandlers(io, socket, engine) {
     }
   });
 
+  socket.on('chooseBlindTrump', () => {
+    const room = engine.getRoom(socket.data.roomCode);
+    if (!room || !room.matchManager) return;
+    try {
+      room.matchManager.startBlindTrump(socket.data.playerId);
+    } catch (err) {
+      socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
+    }
+  });
+
+  socket.on('selectBlindTrumpCard', ({ index }) => {
+    const room = engine.getRoom(socket.data.roomCode);
+    if (!room || !room.matchManager) return;
+    try {
+      room.matchManager.revealBlindTrump(socket.data.playerId, index);
+    } catch (err) {
+      socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
+    }
+  });
+
   socket.on(EVENTS.PLAY_CARD, ({ cardId }) => {
     const room = engine.getRoom(socket.data.roomCode);
     if (!room || !room.matchManager) return;

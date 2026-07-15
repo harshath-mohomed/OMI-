@@ -1475,6 +1475,70 @@
             letter-spacing: 0.1em;
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+        /* ── Blind Trump Selection Styles ── */
+        #trump-chooser-controls {
+            position: absolute;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 45;
+            align-items: center;
+        }
+
+        @keyframes blindRowExit {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+        }
+
+        .blind-row-exit {
+            animation: blindRowExit 350ms cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+
+        .card-back {
+            width: 56px;
+            height: 80px;
+            background: linear-gradient(135deg, #1c0000 0%, #4a0000 50%, #1c0000 100%);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card-back:hover {
+            transform: translateY(-6px) scale(1.04);
+            border-color: #d4af37;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.6), 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-back::before {
+            content: 'OMI';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: rgba(212, 175, 55, 0.5);
+        }
+
+        @media (max-width: 720px) {
+            #trump-chooser-controls {
+                bottom: 120px;
+            }
         }
 
     </style>
@@ -1657,8 +1721,12 @@
                 </div>
 
                 <div id="trick-mat"></div>
+                <div id="game-status-banner" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 frosted-panel px-6 py-4 text-center z-40 max-w-sm">
+                    <div id="game-status-text" class="text-sm font-bold tracking-widest uppercase text-white"></div>
+                </div>
             </div>
 
+            <div id="trump-chooser-controls" class="hidden"></div>
             <div id="player-hand-container"></div>
         </div>
 
@@ -1677,6 +1745,10 @@
                 <button data-suit="DIAMONDS" class="trump-suit-btn bg-red-500 text-white">♦ Diamonds</button>
                 <button data-suit="CLUBS" class="trump-suit-btn bg-gray-700 text-white">♣ Clubs</button>
                 <button data-suit="SPADES" class="trump-suit-btn bg-black text-white">♠ Spades</button>
+            </div>
+            <div class="divider" style="opacity: 0.3;"></div>
+            <div>
+                <button id="btn-blind-trump-modal" class="play-action animate-pulse" style="font-size: 0.8rem; padding: 10px 16px; width: auto; max-width: 200px; margin: 0 auto; border: 1px solid var(--cyan); line-height: 1;">Blind Trump</button>
             </div>
         </div>
     </div>

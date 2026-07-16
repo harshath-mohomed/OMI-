@@ -9,6 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @font-face {
+            font-family: 'TharuDigitalSiyapatha';
+            src: url('/public/src/font/TharuDigitalSiyapatha.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            }
         :root {
             color-scheme: dark;
             --white: #ffffff;
@@ -25,7 +31,7 @@
             margin: 0;
             overflow: hidden;
             background: #050505;
-            font-family: 'Cinzel', serif;
+            font-family: 'Cinzel','TharuDigitalSiyapatha', serif;
         }
 
         body {
@@ -796,7 +802,7 @@
 
         /* Match End Screen */
         .match-end-screen {
-            background: linear-gradient(var(--bg-dark), var(--bg-dark)), url('/src/old_bar_table.jpeg') center/cover no-repeat;
+            background: linear-gradient(var(--bg-dark), var(--bg-dark)), url('/src/skull_background.png') center/cover no-repeat;
             backdrop-filter: blur(12px);
             z-index: 100;
         }
@@ -1572,60 +1578,60 @@
     <div id="home-screen" class="screen">
         <div class="screen-shell entry-shell">
             <h1 class="entry-title">OMI</h1>
-            <p class="entry-subtitle">Enter your name and room to begin</p>
+            <p class="entry-subtitle" data-translate="enterPrompt">Enter your name and room to begin</p>
             <div class="glass-space"></div>
-            <input id="input-username" type="text" placeholder="NAME" maxlength="32" class="minimal-input">
+            <input id="input-username" type="text" placeholder="NAME" maxlength="32" class="minimal-input" data-translate-placeholder="namePlaceholder">
             <div class="h-4"></div>
-            <input id="input-room" type="text" placeholder="ROOM CODE" maxlength="12" class="minimal-input">
+            <input id="input-room" type="text" placeholder="ROOM CODE" maxlength="12" class="minimal-input" data-translate-placeholder="roomPlaceholder">
             <div class="h-4"></div>
-            <button id="btn-home-play" class="play-action">PLAY</button>
+            <button id="btn-home-play" class="play-action" data-translate="play">PLAY</button>
         </div>
     </div>
 
     <div id="lobby-screen" class="screen hidden">
         <div class="lobby-shell">
             <div id="lobby-room-code" class="room-code-badge">ROOM ----</div>
-            <h1 class="lobby-title">LOBBY</h1>
+            <h1 class="lobby-title" data-translate="lobbyTitle">LOBBY</h1>
             <div id="lobby-countdown" class="text-center font-bold text-[#03fff0] tracking-widest text-lg mb-4 hidden"></div>
             <div class="lobby-grid">
                 <section class="team-panel team-black" aria-label="Team Black">
-                    <h2 class="team-label">TEAM BLACK</h2>
+                    <h2 class="team-label" data-translate="teamBlack">TEAM BLACK</h2>
                     <div class="slot-row">
                         <div class="player-slot" data-seat="0">
                             <div class="avatar-card">
                                 <img class="jester-icon" src="/src/joker_black.png" alt="" aria-hidden="true">
                             </div>
-                            <div class="slot-status" id="lobby-seat-0">waiting</div>
+                            <div class="slot-status" id="lobby-seat-0" data-translate="waiting">waiting</div>
                         </div>
                         <div class="player-slot" data-seat="2">
                             <div class="avatar-card">
                                 <img class="jester-icon" src="/src/joker_black.png" alt="" aria-hidden="true">
                             </div>
-                            <div class="slot-status" id="lobby-seat-2">waiting</div>
+                            <div class="slot-status" id="lobby-seat-2" data-translate="waiting">waiting</div>
                         </div>
                     </div>
-                    <button id="btn-join-black" class="join-team-btn play-action">Join Black</button>
+                    <button id="btn-join-black" class="join-team-btn play-action" data-translate="joinBlack">Join Black</button>
                 </section>
 
                 <div class="lobby-divider" aria-hidden="true"></div>
 
                 <section class="team-panel team-red" aria-label="Team Red">
-                    <h2 class="team-label">TEAM RED</h2>
+                    <h2 class="team-label" data-translate="teamRed">TEAM RED</h2>
                     <div class="slot-row">
                         <div class="player-slot" data-seat="1">
                             <div class="avatar-card">
                                 <img class="jester-icon" src="/src/joker_red.png" alt="" aria-hidden="true">
                             </div>
-                            <div class="slot-status" id="lobby-seat-1">waiting</div>
+                            <div class="slot-status" id="lobby-seat-1" data-translate="waiting">waiting</div>
                         </div>
                         <div class="player-slot" data-seat="3">
                             <div class="avatar-card">
                                 <img class="jester-icon" src="/src/joker_red.png" alt="" aria-hidden="true">
                             </div>
-                            <div class="slot-status" id="lobby-seat-3">waiting</div>
+                            <div class="slot-status" id="lobby-seat-3" data-translate="waiting">waiting</div>
                         </div>
                     </div>
-                    <button id="btn-join-red" class="join-team-btn play-action">Join Red</button>
+                    <button id="btn-join-red" class="join-team-btn play-action" data-translate="joinRed">Join Red</button>
                 </section>
             </div>
 
@@ -1641,7 +1647,7 @@
     </div>
 
     <div id="game-screen" class="hidden tavern-game">
-        <img class="tavern-bg" src="/src/old_bar_table.jpeg" alt="" aria-hidden="true">
+        <img class="tavern-bg" src="/src/skull_background.png" alt="" aria-hidden="true">
         <div class="tavern-overlay" aria-hidden="true"></div>
 
         <div class="game-overlay">
@@ -1650,7 +1656,7 @@
                     <div id="status-bar-red" class="team-status-bar bar-red"></div>
                     <div id="status-bar-black" class="team-status-bar bar-black"></div>
                 </div>
-                <div class="chat-label">Chat</div>
+                <div class="chat-label" data-translate="chatLabel">Chat</div>
                 <div class="chat-accent" aria-hidden="true"></div>
                 <div id="chat-messages" class="chat-messages"></div>
                 <div class="chat-input-wrap">
@@ -1659,7 +1665,7 @@
             </aside>
 
             <div class="trump-panel" aria-label="Selected trump">
-                <div class="trump-label">selected trump</div>
+                <div class="trump-label" data-translate="selectedTrump">selected trump</div>
                 <div id="display-trump" class="trump-value">—</div>
             </div>
 
@@ -1667,10 +1673,10 @@
                 <!-- Header row — grid of three columns -->
                 <div class="grid grid-cols-3 items-center text-center">
                     <!-- Left side -->
-                    <div class="font-bold text-xs text-white tracking-widest">BLACK</div>
+                    <div class="font-bold text-xs text-white tracking-widest" data-translate="black">BLACK</div>
                     <!-- Center -->
                     <div class="flex flex-col items-center">
-                        <div class="text-[0.62rem] font-bold tracking-wider uppercase text-gray-400">TOTAL ROUNDS WIN</div>
+                        <div class="text-[0.62rem] font-bold tracking-wider uppercase text-gray-400" data-translate="totalRounds">TOTAL ROUNDS WIN</div>
                         <div class="flex justify-center items-center gap-3 mt-1 text-base font-bold">
                             <span id="rounds-won-black" class="text-right w-12 text-white">0</span>
                             <span class="text-gray-600 font-normal text-xs">|</span>
@@ -1678,7 +1684,7 @@
                         </div>
                     </div>
                     <!-- Right side -->
-                    <div class="font-bold text-xs text-red-600 tracking-widest">RED</div>
+                    <div class="font-bold text-xs text-red-600 tracking-widest" data-translate="red">RED</div>
                 </div>
 
                 <div class="scoreboard-divider-h" style="height: 1px; background: rgba(255, 255, 255, 0.15); margin: 2px 0;" aria-hidden="true"></div>
@@ -1687,17 +1693,17 @@
                 <div class="grid grid-cols-3 items-center text-center">
                     <!-- Left side -->
                     <div>
-                        <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">score</div>
+                        <div class="text-[0.58rem] uppercase tracking-wider text-gray-500" data-translate="score">score</div>
                         <div class="text-sm font-bold text-white mt-0.5" id="score-team-a">0 / 10</div>
                     </div>
                     <!-- Center (scoreboard-mid) -->
                     <div class="flex flex-col items-center">
-                        <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">SCORE</div>
+                        <div class="text-[0.58rem] uppercase tracking-wider text-gray-500" data-translate="score">SCORE</div>
                         <div class="text-gray-600 font-normal text-xs mt-0.5">|</div>
                     </div>
                     <!-- Right side -->
                     <div>
-                        <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">score</div>
+                        <div class="text-[0.58rem] uppercase tracking-wider text-gray-500" data-translate="score">score</div>
                         <div class="text-sm font-bold text-white mt-0.5" id="score-team-b">0 / 10</div>
                     </div>
                 </div>
@@ -1707,11 +1713,11 @@
                 <!-- Team label and Trick wins rows -->
                 <div class="grid grid-cols-3 items-center text-center">
                     <!-- Team Label Left -->
-                    <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">tricks</div>
+                    <div class="text-[0.58rem] uppercase tracking-wider text-gray-500" data-translate="tricks">tricks</div>
                     <!-- Team Label Center -->
-                    <div class="text-[0.58rem] uppercase tracking-wider text-gray-500 whitespace-nowrap">trick wins</div>
+                    <div class="text-[0.58rem] uppercase tracking-wider text-gray-500 whitespace-nowrap" data-translate="trickWins">trick wins</div>
                     <!-- Team Label Right -->
-                    <div class="text-[0.58rem] uppercase tracking-wider text-gray-500">tricks</div>
+                    <div class="text-[0.58rem] uppercase tracking-wider text-gray-500" data-translate="tricks">tricks</div>
                 </div>
 
                 <div class="grid grid-cols-3 items-center text-center mt-0.5">
@@ -1726,15 +1732,15 @@
 
             <div id="board-container">
                 <div id="seat-left" class="opponent-diamond opponent-left" data-seat="1">
-                    <span class="seat-label">opponent player</span>
+                    <span class="seat-label" data-translate="opponentPlayer">opponent player</span>
                     <div class="avatar-icon hidden"><img src="/src/icons/wolf-head.svg" alt=""></div>
                 </div>
                 <div id="seat-right" class="opponent-diamond opponent-right" data-seat="3">
-                    <span class="seat-label">opponent player</span>
+                    <span class="seat-label" data-translate="opponentPlayer">opponent player</span>
                     <div class="avatar-icon hidden"><img src="/src/icons/wolf-head.svg" alt=""></div>
                 </div>
                 <div id="seat-top" class="teammate-slot" data-seat="2">
-                    <span class="seat-label">my team mate</span>
+                    <span class="seat-label" data-translate="myTeamMate">my team mate</span>
                     <div class="avatar-icon hidden"><img src="/src/icons/wolf-head.svg" alt=""></div>
                 </div>
                 <div id="seat-bottom" data-seat="0">
@@ -1760,7 +1766,7 @@
 
     <div id="trump-modal" class="hidden fixed inset-0 trump-modal-backdrop flex items-center justify-center z-50">
         <div class="trump-modal-card text-center space-y-5">
-            <h2>Select Trump Suit</h2>
+            <h2 data-translate="selectTrumpSuit">Select Trump Suit</h2>
             <div class="flex flex-wrap justify-center gap-3">
                 <button data-suit="HEARTS" class="trump-suit-btn bg-red-600 text-white">♥ Hearts</button>
                 <button data-suit="DIAMONDS" class="trump-suit-btn bg-red-500 text-white">♦ Diamonds</button>
@@ -1778,7 +1784,7 @@
 
     <div id="moto-modal" class="hidden fixed inset-0 trump-modal-backdrop flex items-center justify-center z-50">
         <div class="trump-modal-card text-center space-y-5">
-            <h2 id="moto-modal-title">Edit Moto</h2>
+            <h2 id="moto-modal-title" data-translate="editMoto">Edit Moto</h2>
             <div class="moto-grid">
                 <button class="moto-tile" data-moto="ceaser" data-icon="/src/icons/ceaser.svg" data-label="Ceaser" style="background-color: #e53e3e"><img src="/src/icons/ceaser.svg" alt=""></button>
                 <button class="moto-tile" data-moto="dagger-rose" data-icon="/src/icons/dagger-rose.svg" data-label="Dagger Rose" style="background-color: #d53f8c"><img src="/src/icons/dagger-rose.svg" alt=""></button>
@@ -1793,17 +1799,17 @@
                 <button class="moto-tile" data-moto="winged-sword" data-icon="/src/icons/winged-sword.svg" data-label="Winged Sword" style="background-color: #2d3748"><img src="/src/icons/winged-sword.svg" alt=""></button>
                 <button class="moto-tile" data-moto="wolf-head" data-icon="/src/icons/wolf-head.svg" data-label="Wolf Head" style="background-color: #1a202c"><img src="/src/icons/wolf-head.svg" alt=""></button>
             </div>
-            <button id="btn-close-moto" class="play-action mt-4" style="font-size: 14px; padding: 8px 16px; min-width: 120px;">CLOSE</button>
+            <button id="btn-close-moto" class="play-action mt-4" style="font-size: 14px; padding: 8px 16px; min-width: 120px;" data-translate="close">CLOSE</button>
         </div>
     </div>
 
     <div id="team-request-modal" class="hidden fixed inset-0 trump-modal-backdrop flex items-center justify-center z-50">
         <div class="trump-modal-card text-center space-y-5">
-            <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.1em;">Team Join Request</h2>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.1em;" data-translate="teamJoinRequest">Team Join Request</h2>
             <p id="team-request-message" style="color: rgba(255,255,255,0.85); font-size: 0.95rem; line-height: 1.5;"></p>
             <div class="flex justify-center gap-4 mt-4">
-                <button id="btn-accept-request" class="play-action" style="font-size: 14px; padding: 10px 20px; min-width: 110px; background: #22c55e;">Accept</button>
-                <button id="btn-reject-request" class="play-action" style="font-size: 14px; padding: 10px 20px; min-width: 110px; background: #ef4444;">Reject</button>
+                <button id="btn-accept-request" class="play-action" style="font-size: 14px; padding: 10px 20px; min-width: 110px; background: #22c55e;" data-translate="accept">Accept</button>
+                <button id="btn-reject-request" class="play-action" style="font-size: 14px; padding: 10px 20px; min-width: 110px; background: #ef4444;" data-translate="reject">Reject</button>
             </div>
         </div>
     </div>
@@ -1812,7 +1818,7 @@
         <div class="me-container fade-in-slide-up">
             <!-- Left Panel -->
             <div class="me-left-panel">
-                <div class="me-title">MATCH END</div>
+                <div class="me-title" data-translate="matchEnd">MATCH END</div>
                 
                 <div class="me-teams-grid">
                     <!-- Team A -->
@@ -1853,7 +1859,7 @@
                 <!-- Bottom Bar -->
                 <div class="me-bottom-bar">
                     <div class="me-rounds-win">
-                        <div class="me-muted">ROUNDS WIN</div>
+                        <div class="me-muted" data-translate="roundsWin">ROUNDS WIN</div>
                         <div id="me-team-a-rounds" class="text-xl font-bold me-rounds-win-val">0 / 0</div>
                     </div>
                     
@@ -1863,7 +1869,7 @@
                     </div>
 
                     <div class="me-rounds-win">
-                        <div class="me-muted">ROUNDS WIN</div>
+                        <div class="me-muted" data-translate="roundsWin">ROUNDS WIN</div>
                         <div id="me-team-b-rounds" class="text-xl font-bold me-rounds-win-val">0 / 0</div>
                     </div>
                 </div>
@@ -1897,8 +1903,8 @@
         </div>
 
         <div class="me-btn-group fade-in-slide-up">
-            <button id="btn-me-rematch" class="me-btn me-btn-rematch">REMATCH</button>
-            <button id="btn-me-home" class="me-btn me-btn-home">HOME</button>
+            <button id="btn-me-rematch" class="me-btn me-btn-rematch" data-translate="rematch">REMATCH</button>
+            <button id="btn-me-home" class="me-btn me-btn-home" data-translate="home">HOME</button>
         </div>
     </div>
 
@@ -1906,20 +1912,20 @@
     <div id="fullcoat-overlay" class="hidden fixed inset-0 flex flex-col items-center justify-center z-50" style="background: rgba(0, 0, 0, 0.45);">
         <!-- PLAY decision card (for trump caller) -->
         <div id="fullcoat-decision-card" class="hidden fullcoat-card flex flex-col items-center justify-center">
-            <h2>PLAY</h2>
+            <h2 data-translate="play">PLAY</h2>
             <div class="flex gap-4 justify-center">
-                <button id="btn-fullcoat-declare" class="fullcoat-pill-btn btn-cyan">FULLCOAT</button>
-                <button id="btn-fullcoat-continue" class="fullcoat-pill-btn btn-red">CONTINUE</button>
+                <button id="btn-fullcoat-declare" class="fullcoat-pill-btn btn-cyan" data-translate="fullcoat">FULLCOAT</button>
+                <button id="btn-fullcoat-continue" class="fullcoat-pill-btn btn-red" data-translate="continue">CONTINUE</button>
             </div>
         </div>
 
         <!-- YES/NO partner prompt card -->
         <div id="fullcoat-prompt-card" class="hidden fullcoat-yesno-card flex flex-col items-center justify-center">
-            <p class="fullcoat-yesno-text">can you give me two cards ?</p>
+            <p class="fullcoat-yesno-text" data-translate="fullcoatPrompt">can you give me two cards ?</p>
             <div class="fullcoat-yesno-actions">
-                <span id="btn-fullcoat-yes" class="fullcoat-yesno-link yes">YES</span>
+                <span id="btn-fullcoat-yes" class="fullcoat-yesno-link yes" data-translate="yes">YES</span>
                 <span class="mx-2 text-gray-500">|</span>
-                <span id="btn-fullcoat-no" class="fullcoat-yesno-link no">NO</span>
+                <span id="btn-fullcoat-no" class="fullcoat-yesno-link no" data-translate="no">NO</span>
             </div>
         </div>
         
@@ -1932,10 +1938,10 @@
     <!-- Card Exchange Prompt & Confirm Button (shown above player hand) -->
     <div id="fullcoat-exchange-container" class="hidden absolute bottom-[140px] left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-3">
         <div class="bg-black/80 text-[#00f7ff] px-6 py-2 rounded-full border border-[#00f7ff]/30 text-sm font-bold tracking-widest uppercase shadow-lg">
-            Select 2 cards to give
+            <span data-translate="selectCards">Select 2 cards to give</span>
         </div>
         <button id="btn-fullcoat-exchange-confirm" class="play-action bg-[#2b2b2b] text-white hover:bg-black border border-white/20 transition-all font-bold text-sm tracking-widest px-8 py-3 rounded-full shadow-2xl hidden" style="font-size: 14px; min-width: 180px;">
-            CONFIRM EXCHANGE
+            <span data-translate="confirmExchange">CONFIRM EXCHANGE</span>
         </button>
     </div>
 
@@ -1946,6 +1952,8 @@
             <div id="fullcoat-round-body" class="text-lg font-bold text-white tracking-wide"></div>
         </div>
     </div>
+
+
 
     <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="js/client.js"></script>

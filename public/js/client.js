@@ -3,6 +3,7 @@ import { Renderer } from './renderer.js';
 import { AnimationEngine } from './animation.js';
 import { AudioManager } from './audio.js';
 import { SettingsManager } from './settings.js';
+import { LanguageEngine } from './lang.js';
 
 class GameClient {
   constructor() {
@@ -32,6 +33,23 @@ class GameClient {
     this.bindDOMEvents();
     this.bindSocketEvents();
     this.showHomeScreen();
+
+    window.addEventListener('languageChanged', () => {
+      const state = this.localState.currentGameState;
+      if (state) {
+        // Force rendering re-calculations with the newly loaded language maps
+        if (state.phase === 'LOBBY') {
+          this.renderer.renderLobby(state, this.localState.player);
+        }
+        if (state.phase === 'MATCH_END') {
+          this.renderer.renderMatchEnd(state, this.localState.seat);
+        }
+        this.renderer.updateMetadata(state, this.localState.seat);
+      }
+      // Re-apply data-translate attributes AFTER renderer calls
+      // (renderer may overwrite some elements, so this catches them)
+      LanguageEngine.applyTranslations();
+    });
   }
 
   showGameScreen() {

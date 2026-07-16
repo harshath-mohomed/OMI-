@@ -1,4 +1,5 @@
 /** State-Driven DOM Rendering Pipeline Engine Component. */
+import { LanguageEngine } from './lang.js';
 
 const RANK_VALUES = {
   'A': 8, 'K': 7, 'Q': 6, 'J': 5,
@@ -148,7 +149,7 @@ export class Renderer {
       if (!element) return;
 
       const player = players.find((entry) => entry.seat === seat);
-      element.innerText = player ? player.username : 'waiting';
+      element.innerText = player ? player.username : LanguageEngine.get('waiting'); 
     });
 
     this.setElementText('lobby-room-code', state.roomCode ? `ROOM ${state.roomCode}` : 'ROOM ----');
@@ -183,11 +184,11 @@ export class Renderer {
       } else {
         btnBlack.style.display = 'block';
         if (state.pendingTeamRequest && state.pendingTeamRequest.targetTeam === 'A') {
-          btnBlack.innerText = 'PENDING...';
+          btnBlack.innerText = LanguageEngine.get('pending');
           btnBlack.disabled = true;
           btnBlack.className = 'join-team-btn play-action pending';
         } else {
-          btnBlack.innerText = isTeamAFull ? 'FULL' : 'Join Black';
+          btnBlack.innerText = isTeamAFull ? LanguageEngine.get('full') : LanguageEngine.get('joinBlack');
           btnBlack.disabled = hasSeat;
           btnBlack.className = 'join-team-btn play-action' + (isTeamAFull ? ' full' : '');
         }
@@ -204,7 +205,7 @@ export class Renderer {
           btnRed.disabled = true;
           btnRed.className = 'join-team-btn play-action pending';
         } else {
-          btnRed.innerText = isTeamBFull ? 'FULL' : 'Join Red';
+          btnRed.innerText = isTeamBFull ? LanguageEngine.get('full') : LanguageEngine.get('joinRed');
           btnRed.disabled = hasSeat;
           btnRed.className = 'join-team-btn play-action' + (isTeamBFull ? ' full' : '');
         }
@@ -347,9 +348,9 @@ export class Renderer {
       if (relativePosition === 'bottom') continue;
 
       if (relativePosition === 'top') {
-        labelEl.innerText = player ? player.username : 'my team mate';
+        labelEl.innerText = player ? player.username : LanguageEngine.get('myTeamMate');
       } else {
-        labelEl.innerText = player ? player.username : 'opponent player';
+        labelEl.innerText = player ? player.username : LanguageEngine.get('opponentPlayer');
       }
     }
   }
@@ -393,8 +394,8 @@ export class Renderer {
 
     const totalMatchTricks = stats.roundsPlayed * 8;
 
-    this.setElementText('me-team-a-name', 'TEAM BLACK');
-    this.setElementText('me-team-b-name', 'TEAM RED');
+    this.setElementText('me-team-a-name', LanguageEngine.get('teamBlack'));
+    this.setElementText('me-team-b-name', LanguageEngine.get('teamRed'));
 
     this.setElementText('me-team-a-tricks', `${stats.totalTricks.A} / ${totalMatchTricks}`);
     this.setElementText('me-team-b-tricks', `${stats.totalTricks.B} / ${totalMatchTricks}`);
@@ -440,14 +441,14 @@ export class Renderer {
       teamAEl?.classList.remove('loser');
       teamBEl?.classList.add('loser');
       teamBEl?.classList.remove('winner');
-      this.setElementText('me-winner-name', 'TEAM BLACK');
+      this.setElementText('me-winner-name', LanguageEngine.get('teamBlack'));
       if (winnerNameEl) winnerNameEl.style.color = 'var(--cyan)';
     } else if (endData.winnerTeam === 'B') {
       teamBEl?.classList.add('winner');
       teamBEl?.classList.remove('loser');
       teamAEl?.classList.add('loser');
       teamAEl?.classList.remove('winner');
-      this.setElementText('me-winner-name', 'TEAM RED');
+      this.setElementText('me-winner-name', LanguageEngine.get('teamRed'));
       if (winnerNameEl) winnerNameEl.style.color = 'var(--red)';
     } else {
       teamAEl?.classList.remove('winner', 'loser');

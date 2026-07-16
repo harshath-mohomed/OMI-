@@ -309,6 +309,10 @@ class GameClient {
       this.appendChatMessage({
         senderId: 'system',
         text: `${declarerName}'s Fullcoat request was rejected by partner. Game continues.`,
+        timestamp: Date.now()
+      });
+    });
+
     this.socket.on('blindTrumpStarted', ({ chooserId, chooserName }) => {
       this.appendChatMessage({
         senderId: null,
@@ -468,7 +472,7 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
 }
       // ── Blind card dismiss timer ──
       // Uses a permanent flag so that once dismissed, no future syncState can re-show it.
-      if (state.blindTrumpState && state.blindTrumpState.status === 'SELECTED') {
+      if (state.blindTrumpState && state.blindTrumpState.status === 'SELECTED' && !state.isFullcoatActive) {
         const isChooserForTimer = state.trumpChooserId === this.socket.id || (this.localState.player && state.trumpChooserId === this.localState.player.id);
         if (isChooserForTimer) {
           const cardId = state.blindTrumpState.revealedCard.id;
@@ -498,7 +502,6 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
         if (this._blindDismissTimer) { clearTimeout(this._blindDismissTimer); this._blindDismissTimer = null; }
       }
 
-      const trumpModal = document.getElementById('trump-modal');
       const chooserControls = document.getElementById('trump-chooser-controls');
       const gameStatusBanner = document.getElementById('game-status-banner');
       const gameStatusText = document.getElementById('game-status-text');
@@ -514,6 +517,10 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
 
           if (blindStatus === null) {
             if (chooserControls) chooserControls.classList.add('hidden');
+            const blindOption = document.getElementById('blind-trump-container');
+            if (blindOption) {
+              blindOption.classList.remove('hidden');
+            }
             trumpModal?.classList.remove('hidden');
           } else if (blindStatus === 'STARTED') {
             trumpModal?.classList.add('hidden');
@@ -522,10 +529,22 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
               chooserControls.innerHTML = `
                 <div class="text-[0.65rem] font-bold tracking-widest text-center text-gray-400 uppercase mb-1">Blind Trump Selection</div>
                 <div class="flex gap-2">
-                  <div class="card-back" data-index="0"></div>
-                  <div class="card-back" data-index="1"></div>
-                  <div class="card-back" data-index="2"></div>
-                  <div class="card-back" data-index="3"></div>
+                  <div class="card-back" data-index="0">
+                    <span class="card-back-num top-left">1</span>
+                    <span class="card-back-num bottom-right">1</span>
+                  </div>
+                  <div class="card-back" data-index="1">
+                    <span class="card-back-num top-left">2</span>
+                    <span class="card-back-num bottom-right">2</span>
+                  </div>
+                  <div class="card-back" data-index="2">
+                    <span class="card-back-num top-left">3</span>
+                    <span class="card-back-num bottom-right">3</span>
+                  </div>
+                  <div class="card-back" data-index="3">
+                    <span class="card-back-num top-left">4</span>
+                    <span class="card-back-num bottom-right">4</span>
+                  </div>
                 </div>
               `;
               chooserControls.querySelectorAll('.card-back').forEach(el => {
@@ -555,7 +574,11 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
                         ${this.renderer.getCardFaceMarkup(card, assetPath)}
                       </div>`;
                   } else {
-                    cardsHTML += `<div class="card-back" style="pointer-events: none; opacity: 0.6;"></div>`;
+                    cardsHTML += `
+                      <div class="card-back" style="pointer-events: none; opacity: 0.6;">
+                        <span class="card-back-num top-left">${i + 1}</span>
+                        <span class="card-back-num bottom-right">${i + 1}</span>
+                      </div>`;
                   }
                 }
                 chooserControls.innerHTML = `
@@ -577,12 +600,33 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
             }
           }
         }
+      } else if (state.phase === 'FULLCOAT_TRUMP_SELECTION') {
+        const declarer = (state.players || []).find(p => p.id === state.fullcoatDeclarerId);
+        const declarerName = declarer ? declarer.username : 'Declarer';
+        const isDeclarer = state.fullcoatDeclarerId === this.localState.player?.id;
+
+        if (isDeclarer) {
+          if (gameStatusBanner) gameStatusBanner.classList.add('hidden');
+          if (chooserControls) chooserControls.classList.add('hidden');
+          const blindOption = document.getElementById('blind-trump-container');
+          if (blindOption) {
+            blindOption.classList.add('hidden');
+          }
+          trumpModal?.classList.remove('hidden');
+        } else {
+          if (chooserControls) chooserControls.classList.add('hidden');
+          trumpModal?.classList.add('hidden');
+          if (gameStatusBanner && gameStatusText) {
+            gameStatusBanner.classList.remove('hidden');
+            gameStatusText.innerText = `Waiting for ${declarerName} to select Fullcoat Trump...`;
+          }
+        }
       } else {
         trumpModal?.classList.add('hidden');
         if (gameStatusBanner) gameStatusBanner.classList.add('hidden');
 
         // After TRUMP_SELECTION phase ends: show revealed card only if not yet dismissed
-        const hasSelectedBlind = state.blindTrumpState && state.blindTrumpState.status === 'SELECTED';
+        const hasSelectedBlind = state.blindTrumpState && state.blindTrumpState.status === 'SELECTED' && !state.isFullcoatActive;
         if (isChooser && hasSelectedBlind && !this._blindCardDismissed) {
           if (chooserControls) {
             chooserControls.classList.remove('hidden');
@@ -598,7 +642,11 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
                     ${this.renderer.getCardFaceMarkup(card, assetPath)}
                   </div>`;
               } else {
-                cardsHTML += `<div class="card-back" style="pointer-events: none; opacity: 0.6;"></div>`;
+                cardsHTML += `
+                  <div class="card-back" style="pointer-events: none; opacity: 0.6;">
+                    <span class="card-back-num top-left">${i + 1}</span>
+                    <span class="card-back-num bottom-right">${i + 1}</span>
+                  </div>`;
               }
             }
             chooserControls.innerHTML = `

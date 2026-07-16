@@ -158,6 +158,13 @@ export class MatchManager {
       trumpSuit: selectedCard.suit
     });
 
+    // Determine the OPPOSING team (non-trump team) for Fullcoat decision
+    const trumpTeam = this.roundManager.trumpTeam; // 'A' (seats 0,2) or 'B' (seats 1,3)
+    const opponentSeats = trumpTeam === 'A' ? [1, 3] : [0, 2];
+    this.fullcoatOpponents = opponentSeats.map(seat => this.players.find(p => p.seat === seat));
+    this.fullcoatCurrentAskerIndex = 0;
+    this.fullcoatCurrentAskerId = this.fullcoatOpponents[0].id;
+
     this.transitionTo(CONFIG.GAME_PHASES.SECOND_DEAL);
   }
 

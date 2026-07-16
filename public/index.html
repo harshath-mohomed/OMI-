@@ -1475,6 +1475,7 @@
             letter-spacing: 0.1em;
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+        }
         /* ── Blind Trump Selection Styles ── */
         #trump-chooser-controls {
             position: absolute;
@@ -1533,6 +1534,26 @@
             font-weight: 700;
             letter-spacing: 0.1em;
             color: rgba(212, 175, 55, 0.5);
+        }
+
+        .card-back-num {
+            position: absolute;
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: rgba(212, 175, 55, 0.85);
+            line-height: 1;
+        }
+
+        .card-back-num.top-left {
+            top: 5px;
+            left: 6px;
+        }
+
+        .card-back-num.bottom-right {
+            bottom: 5px;
+            right: 6px;
+            transform: rotate(180deg);
         }
 
         @media (max-width: 720px) {
@@ -1746,9 +1767,11 @@
                 <button data-suit="CLUBS" class="trump-suit-btn bg-gray-700 text-white">♣ Clubs</button>
                 <button data-suit="SPADES" class="trump-suit-btn bg-black text-white">♠ Spades</button>
             </div>
-            <div class="divider" style="opacity: 0.3;"></div>
-            <div>
-                <button id="btn-blind-trump-modal" class="play-action animate-pulse" style="font-size: 0.8rem; padding: 10px 16px; width: auto; max-width: 200px; margin: 0 auto; border: 1px solid var(--cyan); line-height: 1;">Blind Trump</button>
+            <div id="blind-trump-container">
+                <div class="divider" style="opacity: 0.3;"></div>
+                <div>
+                    <button id="btn-blind-trump-modal" class="play-action animate-pulse" style="font-size: 0.8rem; padding: 10px 16px; width: auto; max-width: 200px; margin: 0 auto; border: 1px solid var(--cyan); line-height: 1;">Blind Trump</button>
+                </div>
             </div>
         </div>
     </div>

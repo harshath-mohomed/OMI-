@@ -265,7 +265,7 @@ export class Renderer {
     let trumpDisplay = '—';
     if (state.trumpSuit) {
       const symbol = this.suitSymbols[state.trumpSuit] || '';
-      if (state.blindTrumpState && state.blindTrumpState.revealedCard) {
+      if (state.blindTrumpState && state.blindTrumpState.revealedCard && !state.isFullcoatActive) {
         trumpDisplay = `${state.blindTrumpState.revealedCard.rank}${symbol}`;
       } else {
         trumpDisplay = symbol;
@@ -286,7 +286,9 @@ export class Renderer {
 
     const trumpLabelEl = document.querySelector('.trump-panel .trump-label');
     if (trumpLabelEl) {
-      if (state.blindTrumpState && state.blindTrumpState.status === 'SELECTED') {
+      if (state.isFullcoatActive) {
+        trumpLabelEl.innerText = 'fullcoat trump';
+      } else if (state.blindTrumpState && state.blindTrumpState.status === 'SELECTED') {
         trumpLabelEl.innerText = 'blind trump';
       } else {
         trumpLabelEl.innerText = 'selected trump';

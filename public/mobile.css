@@ -173,48 +173,49 @@
     transform: none !important;
   }
 
-  /* ── OPPONENT DIAMONDS ── */
-  .opponent-diamond {
-    width: clamp(52px, 13vw, 76px) !important;
-    height: clamp(52px, 13vw, 76px) !important;
+  /* ── SEAT CARDS RESPONSIVENESS ── */
+  .player-seat-card {
+    width: clamp(65px, 15vw, 90px) !important;
+    height: clamp(80px, 18vw, 105px) !important;
+    padding: 6px 2px !important;
+    gap: 4px !important;
+    flex-direction: column !important;
   }
 
-  .opponent-diamond .seat-label {
-    font-size: clamp(0.45rem, 1.8vw, 0.6rem) !important;
-    padding: 2px !important;
+  .seat-avatar {
+    width: clamp(32px, 8vw, 44px) !important;
+    height: clamp(32px, 8vw, 44px) !important;
   }
 
-  .opponent-diamond.opponent-left {
-    left: 8px !important;
-    top: 50% !important;
-    transform: translateY(-50%) rotate(45deg) !important;
+  .seat-avatar img {
+    width: clamp(20px, 5vw, 28px) !important;
+    height: clamp(20px, 5vw, 28px) !important;
   }
 
-  .opponent-diamond.opponent-right {
-    right: 8px !important;
-    top: 50% !important;
-    transform: translateY(-50%) rotate(45deg) !important;
-  }
-
-  /* ── TEAMMATE SLOT ── */
-  .teammate-slot {
-    width: clamp(60px, 15vw, 90px) !important;
-    height: clamp(60px, 15vw, 90px) !important;
-    top: 22% !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-  }
-
-  .teammate-slot .seat-label {
-    font-size: clamp(0.45rem, 1.8vw, 0.6rem) !important;
-    padding: 4px !important;
-  }
-
-  .seat-label {
+  .player-seat-card .seat-label {
+    font-size: clamp(0.5rem, 1.8vw, 0.6rem) !important;
     max-width: 90% !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+  }
+
+  .player-seat-card.opponent-left {
+    left: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+
+  .player-seat-card.opponent-right {
+    right: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+
+  .player-seat-card.teammate-slot {
+    top: 18% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
   }
 
   /* ── PLAYER HAND ── */
@@ -383,15 +384,26 @@
     height: clamp(70px, 16vw, 120px) !important;
   }
 
-  .opponent-diamond {
-    width: clamp(40px, 10vw, 60px) !important;
-    height: clamp(40px, 10vw, 60px) !important;
+  .player-seat-card {
+    width: clamp(55px, 12vw, 75px) !important;
+    height: clamp(65px, 14vw, 85px) !important;
+    padding: 4px 2px !important;
+    gap: 2px !important;
+    flex-direction: column !important;
+  }
+  
+  .seat-avatar {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .seat-avatar img {
+    width: 18px !important;
+    height: 18px !important;
   }
 
-  .teammate-slot {
-    width: clamp(40px, 10vw, 60px) !important;
-    height: clamp(40px, 10vw, 60px) !important;
-    top: 12% !important;
+  .player-seat-card.teammate-slot {
+    top: 10% !important;
   }
 
   #board-container {

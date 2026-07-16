@@ -361,6 +361,29 @@ export class Renderer {
         overlay.remove();
       }
 
+      // Update background team color classes
+      element.classList.remove('team-black', 'team-red', 'team-none');
+      if (player) {
+        const team = this.getTeamForSeat(seat); // 'A' (seats 0,2) or 'B' (seats 1,3)
+        if (team === 'A') {
+          element.classList.add('team-black');
+        } else if (team === 'B') {
+          element.classList.add('team-red');
+        }
+      } else {
+        element.classList.add('team-none');
+      }
+
+      // Update seat avatar icon image
+      const imgEl = element.querySelector('.seat-avatar img');
+      if (imgEl) {
+        if (player && player.motoId) {
+          imgEl.src = `/src/icons/${player.motoId}.svg`;
+        } else {
+          imgEl.src = '/src/icons/user-solid.svg';
+        }
+      }
+
       if (relativePosition === 'bottom') continue;
 
       if (relativePosition === 'top') {
@@ -480,8 +503,25 @@ export class Renderer {
 
       const iconEl = document.getElementById('me-mvp-icon');
       if (iconEl) {
-        iconEl.src = mvp.avatar_url || '/src/icons/wolf-head.svg';
+        iconEl.src = mvp.motoId ? `/src/icons/${mvp.motoId}.svg` : '/src/icons/wolf-head.svg';
       }
+
+      const motoNames = {
+        'ceaser': 'Ceaser',
+        'dagger-rose': 'Dagger Rose',
+        'diamonds-smile': 'Diamonds Smile',
+        'greek-sphinx': 'Greek Sphinx',
+        'robe': 'Robe',
+        'robot-golem': 'Robot Golem',
+        'rocket': 'Rocket',
+        'rouge': 'Rouge',
+        'shambling-zombie': 'Shambling Zombie',
+        'vampire-dracula': 'Vampire Dracula',
+        'winged-sword': 'Winged Sword',
+        'wolf-head': 'Wolf Head'
+      };
+      const motoName = motoNames[mvp.motoId] || 'Wolf Head';
+      this.setElementText('me-mvp-motto', motoName);
     }
   }
 

@@ -10,3 +10,5 @@ server/database/omi.db
 # OS tracking files
 .DS_Store
 Thumbs.db
+
+omi.code-workspace

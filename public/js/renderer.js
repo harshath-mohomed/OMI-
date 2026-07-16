@@ -288,7 +288,7 @@ export class Renderer {
     if (trumpLabelEl) {
       if (state.isFullcoatActive) {
         trumpLabelEl.innerText = 'fullcoat trump';
-      } else if (state.blindTrumpState && state.blindTrumpState.status === 'SELECTED') {
+      } else if (state.blindTrumpState && state.blindTrumpState.status === 'SELECTED' && state.blindTrumpState.revealedCard) {
         trumpLabelEl.innerText = 'blind trump';
       } else {
         trumpLabelEl.innerText = 'selected trump';

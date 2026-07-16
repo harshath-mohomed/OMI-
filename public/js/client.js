@@ -496,10 +496,16 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
           }
         }
       } else {
-        // New round — reset everything
+        // New round or blind trump not selected — reset everything
         this._blindDismissCardId = null;
         this._blindCardDismissed = false;
         if (this._blindDismissTimer) { clearTimeout(this._blindDismissTimer); this._blindDismissTimer = null; }
+        // Explicitly clear stale blind trump UI from previous round
+        const staleCtrl = document.getElementById('trump-chooser-controls');
+        if (staleCtrl && staleCtrl.innerHTML !== '') {
+          staleCtrl.classList.add('hidden');
+          staleCtrl.innerHTML = '';
+        }
       }
 
       const chooserControls = document.getElementById('trump-chooser-controls');
@@ -516,7 +522,7 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
           const blindStatus = state.blindTrumpState ? state.blindTrumpState.status : null;
 
           if (blindStatus === null) {
-            if (chooserControls) chooserControls.classList.add('hidden');
+            if (chooserControls) { chooserControls.classList.add('hidden'); chooserControls.innerHTML = ''; }
             const blindOption = document.getElementById('blind-trump-container');
             if (blindOption) {
               blindOption.classList.remove('hidden');
@@ -524,6 +530,8 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
             trumpModal?.classList.remove('hidden');
           } else if (blindStatus === 'STARTED') {
             trumpModal?.classList.add('hidden');
+            const blindOptionStarted = document.getElementById('blind-trump-container');
+            if (blindOptionStarted) blindOptionStarted.classList.add('hidden');
             if (chooserControls) {
               chooserControls.classList.remove('hidden');
               chooserControls.innerHTML = `
@@ -556,6 +564,8 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
             }
           } else if (blindStatus === 'SELECTED') {
             trumpModal?.classList.add('hidden');
+            const blindOptionSelected = document.getElementById('blind-trump-container');
+            if (blindOptionSelected) blindOptionSelected.classList.add('hidden');
             // If already dismissed, keep it hidden forever
             if (this._blindCardDismissed) {
               if (chooserControls) chooserControls.classList.add('hidden');
@@ -588,7 +598,7 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
             }
           }
         } else {
-          if (chooserControls) chooserControls.classList.add('hidden');
+          if (chooserControls) { chooserControls.classList.add('hidden'); chooserControls.innerHTML = ''; }
           trumpModal?.classList.add('hidden');
           if (gameStatusBanner && gameStatusText) {
             gameStatusBanner.classList.remove('hidden');
@@ -624,6 +634,8 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
       } else {
         trumpModal?.classList.add('hidden');
         if (gameStatusBanner) gameStatusBanner.classList.add('hidden');
+        const blindOptionOther = document.getElementById('blind-trump-container');
+        if (blindOptionOther) blindOptionOther.classList.add('hidden');
 
         // After TRUMP_SELECTION phase ends: show revealed card only if not yet dismissed
         const hasSelectedBlind = state.blindTrumpState && state.blindTrumpState.status === 'SELECTED' && !state.isFullcoatActive;
@@ -654,7 +666,7 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
               <div class="flex gap-2">${cardsHTML}</div>`;
           }
         } else {
-          if (chooserControls) chooserControls.classList.add('hidden');
+          if (chooserControls) { chooserControls.classList.add('hidden'); chooserControls.innerHTML = ''; }
         }
       }
 

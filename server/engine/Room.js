@@ -91,7 +91,7 @@ export class Room {
 
   startLobbyCountdown(ioNamespace) {
     if (this.countdownInterval) return;
-    this.lobbyCountdown = 10;
+    this.lobbyCountdown = 5;
     this.broadcastGameState();
 
     this.countdownInterval = setInterval(() => {

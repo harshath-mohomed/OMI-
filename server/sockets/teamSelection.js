@@ -12,6 +12,11 @@ export function registerTeamSelectionHandlers(io, socket, engine) {
     const result = room.requestTeamJoin(playerId, team);
     if (result && !result.success) {
       socket.emit(EVENTS.ILLEGAL_MOVE, { reason: result.reason });
+    } else if (result && result.success && !result.pending) {
+      const seatedActive = room.players.filter(p => p.seat !== null && !p.isDisconnected);
+      if (seatedActive.length === 4 && !room.matchManager) {
+        room.startLobbyCountdown(io);
+      }
     }
   });
 
@@ -24,5 +29,10 @@ export function registerTeamSelectionHandlers(io, socket, engine) {
 
     const responderId = socket.data.playerId;
     room.respondToTeamJoinRequest(responderId, requestingPlayerId, accept);
+
+    const seatedActive = room.players.filter(p => p.seat !== null && !p.isDisconnected);
+    if (seatedActive.length === 4 && !room.matchManager) {
+      room.startLobbyCountdown(io);
+    }
   });
 }

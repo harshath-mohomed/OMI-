@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>OMI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1569,8 +1572,13 @@
         }
 
     </style>
+    <link rel="stylesheet" href="mobile.css">
 </head>
 <body>
+
+    <button id="btn-fullscreen" aria-label="Toggle Fullscreen" title="Fullscreen">
+        <span id="fullscreen-icon">⛶</span>
+    </button>
 
     <img class="landing-bg" src="/src/card_background_2.jpg" alt="" aria-hidden="true">
     <div class="landing-overlay"></div>
@@ -1651,7 +1659,22 @@
         <div class="tavern-overlay" aria-hidden="true"></div>
 
         <div class="game-overlay">
-            <aside class="chat-panel frosted-panel" aria-label="Chat">
+            <div id="mobile-score-strip">
+                <div class="mss-team">
+                    <span class="mss-name">BLK</span>
+                    <span id="mss-score-black" class="mss-score">0/10</span>
+                    <span id="mss-tricks-black" class="mss-tricks">0🂠</span>
+                </div>
+                <div class="mss-center">
+                    <span id="mss-trump" class="mss-trump">—</span>
+                </div>
+                <div class="mss-team mss-team-right">
+                    <span id="mss-tricks-red" class="mss-tricks">0🂠</span>
+                    <span id="mss-score-red" class="mss-score">0/10</span>
+                    <span class="mss-name mss-name-red">RED</span>
+                </div>
+            </div>
+            <aside id="chat-panel" class="chat-panel frosted-panel" aria-label="Chat">
                 <div class="team-status-bars" aria-hidden="true">
                     <div id="status-bar-red" class="team-status-bar bar-red"></div>
                     <div id="status-bar-black" class="team-status-bar bar-black"></div>
@@ -1747,14 +1770,14 @@
                     <div class="avatar-icon hidden"><img src="/src/icons/wolf-head.svg" alt=""></div>
                 </div>
 
-                <div id="trick-mat"></div>
-                <div id="game-status-banner" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 frosted-panel px-6 py-4 text-center z-40 max-w-sm">
-                    <div id="game-status-text" class="text-sm font-bold tracking-widest uppercase text-white"></div>
+                <div id="trick-mat-wrapper">
+                    <div id="trick-mat"></div>
                 </div>
             </div>
 
             <div id="trump-chooser-controls" class="hidden"></div>
             <div id="player-hand-container"></div>
+            <button id="btn-chat-toggle" class="fixed bottom-4 right-4 z-50 w-11 h-11 rounded-full bg-gray-800 text-white text-xl md:hidden flex items-center justify-center">💬</button>
         </div>
 
         <span id="display-phase" class="hidden">Lobby</span>

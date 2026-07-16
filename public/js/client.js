@@ -695,3 +695,71 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
 
 new GameClient();
 
+// ── Fullscreen Toggle ──
+const fullscreenBtn = document.getElementById('btn-fullscreen');
+const fullscreenIcon = document.getElementById('fullscreen-icon');
+
+function enterFullscreen() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) {
+    el.requestFullscreen();
+  } else if (el.webkitRequestFullscreen) {
+    el.webkitRequestFullscreen();
+  } else if (el.mozRequestFullScreen) {
+    el.mozRequestFullScreen();
+  } else if (el.msRequestFullscreen) {
+    el.msRequestFullscreen();
+  }
+}
+
+function exitFullscreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  } else if (document.mozCancelFullScreen) {
+    document.mozCancelFullScreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
+  }
+}
+
+function isFullscreen() {
+  return !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+}
+
+function updateFullscreenIcon() {
+  if (fullscreenIcon) {
+    fullscreenIcon.textContent = isFullscreen() ? '✕' : '⛶';
+  }
+}
+
+fullscreenBtn?.addEventListener('click', () => {
+  if (isFullscreen()) {
+    exitFullscreen();
+  } else {
+    enterFullscreen();
+  }
+});
+
+document.addEventListener('fullscreenchange', updateFullscreenIcon);
+document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+
+// iOS Safari does not support the Fullscreen API — show a tip instead
+if (
+  /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+  !window.navigator.standalone
+) {
+  fullscreenBtn?.addEventListener('click', () => {
+    if (!isFullscreen()) {
+      alert('On iOS, tap the Share button and select "Add to Home Screen" for a fullscreen experience.');
+    }
+  });
+}

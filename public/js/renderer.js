@@ -306,6 +306,22 @@ export class Renderer {
     this.updateSeatLabels(state, localSeatIndex);
 
     document.title = state.roomCode ? `OMI - Room ${state.roomCode}` : 'OMI Multiplayer Authorization Arena';
+
+    // Mobile score strip
+    this.setElementText('mss-score-black', `${tokensWonBlack}/${matchScores.A ?? 10}`);
+    this.setElementText('mss-score-red',   `${tokensWonRed}/${matchScores.B ?? 10}`);
+    this.setElementText('mss-trump', state.trumpSuit ? this.suitSymbols[state.trumpSuit] : '—');
+    this.setElementText('mss-tricks-black', `${roundTricks.A ?? 0}🂠`);
+    this.setElementText('mss-tricks-red',   `${roundTricks.B ?? 0}🂠`);
+
+    const mssTrumpEl = document.getElementById('mss-trump');
+    if (mssTrumpEl) {
+      if (state.trumpSuit === 'HEARTS' || state.trumpSuit === 'DIAMONDS') {
+        mssTrumpEl.style.color = '#ef4444';
+      } else {
+        mssTrumpEl.style.color = '#fff';
+      }
+    }
   }
 
   updateTeamStatusBars(activeTurnSeat, players) {

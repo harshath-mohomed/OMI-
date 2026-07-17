@@ -10,11 +10,13 @@ export class MatchManager {
    * @param {string} roomId 
    * @param {Player[]} players 
    * @param {Function} emitCallback 
+   * @param {object} options
    */
-  constructor(roomId, players, emitCallback) {
+  constructor(roomId, players, emitCallback, options = {}) {
     this.roomId = roomId;
     this.players = players; // Array length exactly 4 verified at room level
     this.emitCallback = emitCallback;
+    this.isSinglePlayer = options.isSinglePlayer || false;
     this.phase = CONFIG.GAME_PHASES.MATCH_START;
 
     this.dealer = new Dealer();
@@ -210,7 +212,12 @@ export class MatchManager {
   executeSecondDeal() {
     this.dealer.dealToAll(this.players, CONFIG.CARDS_PER_DEAL);
     this.emitCallback('SECOND_DEAL_COMPLETED', {});
-    this.transitionTo(CONFIG.GAME_PHASES.FULLCOAT_DECISION);
+    
+    if (this.isSinglePlayer) {
+      this.transitionTo(CONFIG.GAME_PHASES.PLAYING);
+    } else {
+      this.transitionTo(CONFIG.GAME_PHASES.FULLCOAT_DECISION);
+    }
   }
 
   notifyActiveTurn() {

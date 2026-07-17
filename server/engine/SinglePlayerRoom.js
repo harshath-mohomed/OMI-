@@ -68,7 +68,7 @@ export class SinglePlayerRoom extends Room {
 
       // After each event, check if a bot needs to act
       this._scheduleBotAction();
-    });
+    }, { isSinglePlayer: true });
 
     this.matchManager.initializeMatch();
   }

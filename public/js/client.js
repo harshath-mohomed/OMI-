@@ -30,6 +30,7 @@ class GameClient {
       'wolf-head': { label: 'Wolf Head', icon: '/src/icons/wolf-head.svg' }
     };
 
+    this.playIntro();
     this.bindDOMEvents();
     this.bindSocketEvents();
     this.showHomeScreen();
@@ -63,13 +64,50 @@ class GameClient {
   }
 
   showHomeScreen() {
-    document.getElementById('home-screen')?.classList.remove('hidden');
+    const introScreen = document.getElementById('intro-screen');
+    if (introScreen && introScreen.style.display !== 'none') {
+      document.getElementById('home-screen')?.classList.add('hidden');
+    } else {
+      document.getElementById('home-screen')?.classList.remove('hidden');
+    }
     document.getElementById('lobby-screen')?.classList.add('hidden');
     document.getElementById('game-screen')?.classList.add('hidden');
     document.getElementById('match-end-screen')?.classList.add('hidden');
     document.querySelector('.landing-bg')?.classList.remove('hidden');
     document.querySelector('.landing-overlay')?.classList.remove('hidden');
     SettingsManager.repositionForScreen('home');
+  }
+
+  playIntro() {
+    const introScreen = document.getElementById('intro-screen');
+    const introVideo  = document.getElementById('intro-video');
+    const skipBtn     = document.getElementById('btn-skip-intro');
+
+    if (!introScreen || !introVideo) return;
+
+    // Keep home screen hidden until intro finishes
+    document.getElementById('home-screen')?.classList.add('hidden');
+
+    // Force preload and play
+    introVideo.load();
+    introVideo.play().catch(() => {
+      // Autoplay blocked by browser — skip intro silently
+      introScreen.style.display = 'none';
+      this.showHomeScreen();
+    });
+
+    const endIntro = () => {
+      introScreen.style.transition = 'opacity 1s ease';
+      introScreen.style.opacity = '0';
+      setTimeout(() => {
+        introScreen.style.display = 'none';
+        this.showHomeScreen();
+      }, 1000);
+    };
+
+    // End on video finish or skip click
+    introVideo.addEventListener('ended', endIntro);
+    skipBtn?.addEventListener('click', endIntro);
   }
 
   showLobbyScreen() {

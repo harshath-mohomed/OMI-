@@ -61,7 +61,11 @@ const initializeDatabaseSchema = async () => {
   console.log('[INFO] Native PostgreSQL Schema verified successfully.');
 };
 
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../public'), {
+  maxAge: '7d',       // cache for 7 days
+  etag: true,
+  lastModified: true
+}));
 
 const startServer = async () => {
   try {

@@ -1638,6 +1638,41 @@
     <img class="landing-bg" src="/src/card_background_2.jpg" alt="" aria-hidden="true">
     <div class="landing-overlay"></div>
 
+    <div id="intro-screen" style="
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+      <video
+        id="intro-video"
+        autoplay
+        muted
+        playsinline
+        preload="auto"
+        style="width: 100%; height: 100%; object-fit: cover;"
+      >
+        <source src="/src/game_intro.mp4"  type="video/mp4">
+      </video>
+
+      <button id="btn-skip-intro" style="
+        position: absolute;
+        bottom: 30px; right: 30px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+        padding: 8px 20px;
+        cursor: pointer;
+        font-family: inherit;
+        letter-spacing: 2px;
+        font-size: 12px;
+      ">SKIP</button>
+    </div>
+
     <div id="home-screen" class="screen">
         <div class="screen-shell entry-shell">
             <h1 class="entry-title">OMI</h1>

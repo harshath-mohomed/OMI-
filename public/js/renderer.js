@@ -386,10 +386,19 @@ export class Renderer {
 
       if (relativePosition === 'bottom') continue;
 
+      let displayName = LanguageEngine.get(relativePosition === 'top' ? 'myTeamMate' : 'opponentPlayer');
+      if (player) {
+        displayName = player.username;
+        // Optionally append bot indicator if the data isn't directly in the username:
+        if (player.isBot && !displayName.includes('🤖')) {
+          displayName += ' 🤖';
+        }
+      }
+
       if (relativePosition === 'top') {
-        labelEl.innerText = player ? player.username : LanguageEngine.get('myTeamMate');
+        labelEl.innerText = displayName;
       } else {
-        labelEl.innerText = player ? player.username : LanguageEngine.get('opponentPlayer');
+        labelEl.innerText = displayName;
       }
     }
   }

@@ -14,6 +14,7 @@ class GameClient {
     SettingsManager.init(AudioManager);
 
     this.localState = { seat: null, currentGameState: null };
+    this.isSinglePlayer = false;
     this.selectedExchangeCards = [];
     this.motoCatalog = {
       'ceaser': { label: 'Ceaser', icon: '/src/icons/ceaser.svg' },
@@ -171,10 +172,25 @@ class GameClient {
     this.socket.emit('joinRoom', { username, roomCode, asSpectator: false });
   }
 
+  startSinglePlayer() {
+    const username = document.getElementById('input-username').value.trim();
+    if (!username) return alert('NAME required');
+
+    this.localUsername = username;
+    this.isSinglePlayer = true;
+    AudioManager.startBGM();
+
+    this.socket.emit('startSinglePlayer', { username });
+  }
+
   bindDOMEvents() {
     document.getElementById('btn-home-play').addEventListener('click', () => {
       const roomCode = document.getElementById('input-room').value.trim().toUpperCase();
       this.joinRoom(roomCode);
+    });
+
+    document.getElementById('btn-single-player')?.addEventListener('click', () => {
+      this.startSinglePlayer();
     });
 
     document.getElementById('btn-open-moto')?.addEventListener('click', () => {
@@ -313,6 +329,7 @@ class GameClient {
 
     document.getElementById('btn-me-home')?.addEventListener('click', () => {
       this.socket.emit('returnHome');
+      this.isSinglePlayer = false;
       this.showHomeScreen();
     });
 
@@ -485,7 +502,7 @@ class GameClient {
         this.localState.player = identity;
       }
 
-      if (state.phase === 'LOBBY') {
+      if (state.phase === 'LOBBY' && !this.isSinglePlayer) {
         this.showLobbyScreen();
         this.renderer.renderLobby(state, this.localState.player);
         this.updateLobbyMotoPreview(this.localState.player);

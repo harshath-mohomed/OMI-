@@ -4,6 +4,7 @@ import { registerGameplayHandlers } from './sockets/gameplay.js';
 import { registerChatHandlers } from './sockets/chat.js';
 import { registerDisconnectHandlers } from './sockets/reconnect.js';
 import { registerTeamSelectionHandlers } from './sockets/teamSelection.js';
+import { registerSinglePlayerHandlers } from './sockets/singlePlayer.js';
 
 export function initializeSocketLayer(httpServer, engine) {
   const io = new Server(httpServer, {
@@ -15,6 +16,7 @@ export function initializeSocketLayer(httpServer, engine) {
     registerGameplayHandlers(io, socket, engine);
     registerChatHandlers(io, socket, engine);
     registerTeamSelectionHandlers(io, socket, engine);
+    registerSinglePlayerHandlers(io, socket, engine);
     registerDisconnectHandlers(io, socket, engine);
   });
 

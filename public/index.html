@@ -1682,7 +1682,10 @@
             <div class="h-4"></div>
             <input id="input-room" type="text" placeholder="ROOM CODE" maxlength="12" class="minimal-input" data-translate-placeholder="roomPlaceholder">
             <div class="h-4"></div>
-            <button id="btn-home-play" class="play-action" data-translate="play">PLAY</button>
+            <div style="display: flex; gap: 12px; width: 100%;">
+                <button id="btn-home-play" class="play-action" style="flex: 1; padding: 14px 4px; font-size: 0.75rem; letter-spacing: 0.15em;" data-translate="multiplayer">MULTIPLAYER</button>
+                <button id="btn-single-player" class="play-action" style="flex: 1; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(0, 247, 255, 0.2); padding: 14px 4px; font-size: 0.75rem; letter-spacing: 0.15em;" data-translate="singlePlayer">SINGLE PLAYER</button>
+            </div>
         </div>
     </div>
 

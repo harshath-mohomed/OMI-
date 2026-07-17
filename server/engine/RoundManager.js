@@ -17,6 +17,7 @@ export class RoundManager {
     this.activeTurnSeat = null;
     this.leadSuit = null;
     this.tricksPlayed = 0;
+    this.tricksPerHand = CONFIG.TRICKS_PER_HAND; // Can be overridden for Half Coat (4 tricks)
   }
 
   /**
@@ -30,6 +31,7 @@ export class RoundManager {
     this.currentTrick = [];
     this.leadSuit = null;
     this.tricksPlayed = 0;
+    this.tricksPerHand = CONFIG.TRICKS_PER_HAND;
     this.scoreManager.resetRound();
     this.activeTurnSeat = chooser.seat; // Trump selector plays first
   }
@@ -84,10 +86,10 @@ export class RoundManager {
     this.activeTurnSeat = winner.seat;
 
     let guard = 0;
-  while (this.players.find(p => p.seat === this.activeTurnSeat)?.isOut && guard++ < 4) {
-    this.activeTurnSeat = (this.activeTurnSeat + 1) % 4;
-  }
-    const isHandComplete = this.tricksPlayed >= CONFIG.TRICKS_PER_HAND;
+    while (this.players.find(p => p.seat === this.activeTurnSeat)?.isOut && guard++ < 4) {
+      this.activeTurnSeat = (this.activeTurnSeat + 1) % 4;
+    }
+    const isHandComplete = this.tricksPlayed >= this.tricksPerHand;
 
     return {
       trickResult,

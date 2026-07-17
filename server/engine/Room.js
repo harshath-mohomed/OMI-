@@ -196,7 +196,11 @@ export class Room {
         fullcoatPartnerId: null,
         fullcoatRequest: null,
         fullcoatExchange: null,
-        fullcoatSummary: null
+        fullcoatSummary: null,
+        isHalfcoatActive: false,
+        halfcoatDeclarerId: null,
+        halfcoatCountdown: null,
+        halfcoatSummary: null
       };
     }
 
@@ -228,6 +232,10 @@ export class Room {
       fullcoatSummary: this.matchManager.fullcoatSummary,
       fullcoatOpponents: this.matchManager.fullcoatOpponents?.map(p => p.id) ?? [],
       fullcoatCurrentAskerId: this.matchManager.fullcoatCurrentAskerId,
+      isHalfcoatActive: this.matchManager.isHalfcoatActive,
+      halfcoatDeclarerId: this.matchManager.halfcoatDeclarerId,
+      halfcoatCountdown: this.matchManager.halfcoatCountdown,
+      halfcoatSummary: this.matchManager.halfcoatSummary,
       blindTrumpState: this.matchManager.blindTrumpState ? {
         status: this.matchManager.blindTrumpState.status,
         revealedCard: this.matchManager.blindTrumpState.revealedCard ? this.matchManager.blindTrumpState.revealedCard.toJSON() : null,

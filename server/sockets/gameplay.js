@@ -2,18 +2,20 @@ import { EVENTS } from '../utilities/constants.js';
 
 export function registerGameplayHandlers(io, socket, engine) {
   socket.on(EVENTS.CHOOSE_TRUMP, ({ suit }) => {
-  const room = engine.getRoom(socket.data.roomCode);
-  if (!room || !room.matchManager) return;
-  try {
-    if (room.matchManager.phase === 'FULLCOAT_TRUMP_SELECTION') {
-      room.matchManager.selectFullcoatTrump(socket.data.playerId, suit);
-    } else {
-      room.matchManager.selectTrump(socket.data.playerId, suit);
+    const room = engine.getRoom(socket.data.roomCode);
+    if (!room || !room.matchManager) return;
+    try {
+      if (room.matchManager.phase === 'FULLCOAT_TRUMP_SELECTION') {
+        room.matchManager.selectFullcoatTrump(socket.data.playerId, suit);
+      } else if (room.matchManager.phase === 'HALFCOAT_TRUMP_SELECTION') {
+        room.matchManager.selectHalfcoatTrump(socket.data.playerId, suit);
+      } else {
+        room.matchManager.selectTrump(socket.data.playerId, suit);
+      }
+    } catch (err) {
+      socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
     }
-  } catch (err) {
-    socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
-  }
-});
+  });
 
   socket.on('declareFullcoat', ({ action }) => {
     const room = engine.getRoom(socket.data.roomCode);
@@ -156,6 +158,28 @@ export function registerGameplayHandlers(io, socket, engine) {
     if (!room || !room.matchManager) return;
     try {
       room.matchManager.revealBlindTrump(socket.data.playerId, index);
+    } catch (err) {
+      socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
+    }
+  });
+
+  socket.on('declareHalfcoat', () => {
+    const room = engine.getRoom(socket.data.roomCode);
+    if (!room || !room.matchManager) return;
+    try {
+      room.matchManager.declareHalfcoat(socket.data.playerId);
+      room.broadcastGameState();
+    } catch (err) {
+      socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
+    }
+  });
+
+  socket.on('declineHalfcoat', () => {
+    const room = engine.getRoom(socket.data.roomCode);
+    if (!room || !room.matchManager) return;
+    try {
+      room.matchManager.declineHalfcoat(socket.data.playerId);
+      room.broadcastGameState();
     } catch (err) {
       socket.emit(EVENTS.ILLEGAL_MOVE, { reason: err.message });
     }

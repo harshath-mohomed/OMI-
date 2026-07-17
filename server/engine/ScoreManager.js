@@ -41,12 +41,54 @@ export class ScoreManager {
    * @param {boolean} isFullcoatActive
    * @param {string|null} fullcoatDeclarerTeam
    * @param {boolean} fullcoatFailed
+   * @param {boolean} isHalfcoatActive
+   * @param {string|null} halfcoatDeclarerTeam
+   * @param {boolean} halfcoatFailed
    * @returns {Object}
    */
-  finalizeHand(trumpTeam, isFullcoatActive = false, fullcoatDeclarerTeam = null, fullcoatFailed = false) {
+  finalizeHand(trumpTeam, isFullcoatActive = false, fullcoatDeclarerTeam = null, fullcoatFailed = false, isHalfcoatActive = false, halfcoatDeclarerTeam = null, halfcoatFailed = false) {
     this.matchStats.roundsPlayed++;
     const teamA = this.roundTricks.A;
     const teamB = this.roundTricks.B;
+
+    // Half Coat scoring path (±3 points, same structure as Fullcoat)
+    if (isHalfcoatActive) {
+      const declarerTeam = halfcoatDeclarerTeam;
+      const opponentTeam = declarerTeam === 'A' ? 'B' : 'A';
+
+      let winningTeam, losingTeam, allocatedPoints, isHalfcoatWin;
+
+      if (!halfcoatFailed) {
+        // Half Coat Win: Declarer won all tricks → +3 tokens
+        winningTeam = declarerTeam;
+        losingTeam = opponentTeam;
+        allocatedPoints = Math.min(3, this.matchScores[losingTeam]);
+        this.matchScores[losingTeam] -= allocatedPoints;
+        isHalfcoatWin = true;
+      } else {
+        // Half Coat Fail: Declarer lost a trick → -3 tokens from declarer's team
+        winningTeam = opponentTeam;
+        losingTeam = declarerTeam;
+        allocatedPoints = Math.min(3, this.matchScores[losingTeam]);
+        this.matchScores[losingTeam] -= allocatedPoints;
+        isHalfcoatWin = false;
+      }
+
+      this.matchStats.roundsWon[winningTeam]++;
+
+      return {
+        winningTeam,
+        losingTeam,
+        allocatedPoints,
+        basePoints: 3,
+        bonusPoints: 0,
+        isKaputhi: !halfcoatFailed,
+        isHanging: false,
+        isHalfcoat: true,
+        isHalfcoatWin,
+        currentMatchScores: { ...this.matchScores }
+      };
+    }
 
     if (isFullcoatActive) {
       const declarerTeam = fullcoatDeclarerTeam || (trumpTeam === 'A' ? 'B' : 'A');

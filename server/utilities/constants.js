@@ -29,5 +29,6 @@ export const EVENTS = {
   RESPOND_TEAM_JOIN: 'respondTeamJoinRequest',
   TEAM_JOIN_REQUEST: 'teamJoinRequest',
   TEAM_JOIN_ACCEPTED: 'teamJoinAccepted',
-  TEAM_JOIN_REJECTED: 'teamJoinRejected'
+  TEAM_JOIN_REJECTED: 'teamJoinRejected',
+  START_SINGLE_PLAYER: 'startSinglePlayer'
 };

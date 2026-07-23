@@ -2024,6 +2024,24 @@
         </div>
     </div>
 
+    <!-- Halfcoat decision/request overlay -->
+    <div id="halfcoat-overlay" class="hidden fixed inset-0 flex flex-col items-center justify-center z-50" style="background: rgba(0, 0, 0, 0.45);">
+        <!-- Prompt/Decision Card (for opponent players during the countdown) -->
+        <div id="halfcoat-decision-card" class="hidden fullcoat-card flex flex-col items-center justify-center">
+            <h2 data-translate="halfcoatPrompt">Attempt Half Coat?</h2>
+            <div id="halfcoat-countdown-text" class="text-3xl font-extrabold text-[#00f7ff] my-4">5</div>
+            <div class="flex gap-4 justify-center">
+                <button id="btn-halfcoat-declare" class="fullcoat-pill-btn btn-cyan" data-translate="yes">YES</button>
+                <button id="btn-halfcoat-decline" class="fullcoat-pill-btn btn-red" data-translate="no">NO</button>
+            </div>
+        </div>
+        
+        <!-- Status / Waiting label -->
+        <div id="halfcoat-status-card" class="hidden text-center text-white bg-black/85 px-6 py-4 rounded-xl border border-white/10 max-w-sm">
+            <p id="halfcoat-status-text" class="text-sm font-semibold tracking-wider uppercase"></p>
+        </div>
+    </div>
+
     <!-- Fullcoat decision/request overlay -->
     <div id="fullcoat-overlay" class="hidden fixed inset-0 flex flex-col items-center justify-center z-50" style="background: rgba(0, 0, 0, 0.45);">
         <!-- PLAY decision card (for trump caller) -->

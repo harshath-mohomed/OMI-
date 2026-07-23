@@ -266,7 +266,7 @@ export class Renderer {
     let trumpDisplay = '—';
     if (state.trumpSuit) {
       const symbol = this.suitSymbols[state.trumpSuit] || '';
-      if (state.blindTrumpState && state.blindTrumpState.revealedCard && !state.isFullcoatActive) {
+      if (state.blindTrumpState && state.blindTrumpState.revealedCard && !state.isFullcoatActive && !state.isHalfcoatActive) {
         trumpDisplay = `${state.blindTrumpState.revealedCard.rank}${symbol}`;
       } else {
         trumpDisplay = symbol;
@@ -289,6 +289,8 @@ export class Renderer {
     if (trumpLabelEl) {
       if (state.isFullcoatActive) {
         trumpLabelEl.innerText = 'fullcoat trump';
+      } else if (state.isHalfcoatActive) {
+        trumpLabelEl.innerText = 'halfcoat trump';
       } else if (state.blindTrumpState && state.blindTrumpState.status === 'SELECTED' && state.blindTrumpState.revealedCard) {
         trumpLabelEl.innerText = 'blind trump';
       } else {
@@ -296,8 +298,9 @@ export class Renderer {
       }
     }
 
-    this.setElementText('score-tricks-black', `${roundTricks.A ?? 0} / 8`);
-    this.setElementText('score-tricks-red', `${roundTricks.B ?? 0} / 8`);
+    const maxTricks = state.isHalfcoatActive ? 4 : 8;
+    this.setElementText('score-tricks-black', `${roundTricks.A ?? 0} / ${maxTricks}`);
+    this.setElementText('score-tricks-red', `${roundTricks.B ?? 0} / ${maxTricks}`);
 
     const localRoundsWon = localTeam ? (roundsWon[localTeam] ?? 0) : (roundsWon.A ?? 0);
     this.setElementText('total-rounds-win', `${localRoundsWon}/10`);
@@ -658,6 +661,86 @@ export class Renderer {
     let handOverlay = document.getElementById('hand-sitting-out-overlay');
     if (handOverlay) {
       handOverlay.remove();
+    }
+  }
+
+  renderHalfcoat(state, localPlayer, hasDeclined = false) {
+    const halfcoatOverlay = document.getElementById('halfcoat-overlay');
+    const decisionCard = document.getElementById('halfcoat-decision-card');
+    const statusCard = document.getElementById('halfcoat-status-card');
+    const statusText = document.getElementById('halfcoat-status-text');
+    const countdownText = document.getElementById('halfcoat-countdown-text');
+    const roundModal = document.getElementById('fullcoat-round-modal');
+
+    if (halfcoatOverlay) halfcoatOverlay.classList.add('hidden');
+    if (decisionCard) decisionCard.classList.add('hidden');
+    if (statusCard) statusCard.classList.add('hidden');
+
+    if (state.phase === 'HALFCOAT_DECISION') {
+      if (halfcoatOverlay) halfcoatOverlay.classList.remove('hidden');
+
+      const chooser = state.players?.find(p => p.id === state.trumpChooserId);
+      const isMyTeamChooser = localPlayer && chooser && localPlayer.team === chooser.team;
+
+      if (!isMyTeamChooser) {
+        if (hasDeclined) {
+          if (statusCard && statusText) {
+            statusText.innerText = 'Waiting for opponents to declare Half Coat...';
+            statusCard.classList.remove('hidden');
+          }
+        } else {
+          if (decisionCard) decisionCard.classList.remove('hidden');
+          if (countdownText) countdownText.innerText = state.halfcoatCountdown ?? '5';
+        }
+      } else {
+        if (statusCard && statusText) {
+          statusText.innerText = 'Waiting for opponents to declare Half Coat...';
+          statusCard.classList.remove('hidden');
+        }
+      }
+    }
+
+    if (state.phase === 'HALFCOAT_TRUMP_SELECTION') {
+      const isDeclarerLocal = localPlayer?.id === state.halfcoatDeclarerId;
+      if (!isDeclarerLocal) {
+        if (halfcoatOverlay) halfcoatOverlay.classList.remove('hidden');
+        if (statusCard && statusText) {
+          const declarer = state.players?.find(p => p.id === state.halfcoatDeclarerId);
+          statusText.innerText = `Waiting for ${declarer?.username || 'declarer'} to choose Half Coat trump...`;
+          statusCard.classList.remove('hidden');
+        }
+      }
+    }
+
+    if (state.phase === 'ROUND_END' && state.halfcoatSummary) {
+      if (roundModal) {
+        const titleEl = document.getElementById('fullcoat-round-title');
+        const bodyEl = document.getElementById('fullcoat-round-body');
+
+        const declarer = state.players?.find(p => p.id === state.halfcoatDeclarerId);
+        const declarerTeam = declarer?.team;
+        const isMyTeamDeclarer = (localPlayer && declarerTeam && localPlayer.team === declarerTeam);
+        const points = state.halfcoatSummary.points;
+
+        if (state.halfcoatSummary.win) {
+          if (isMyTeamDeclarer) {
+            if (titleEl) { titleEl.innerText = 'HALF COAT Successful!'; titleEl.style.color = '#00f7ff'; }
+            if (bodyEl) { bodyEl.innerText = `+${points} Tokens`; }
+          } else {
+            if (titleEl) { titleEl.innerText = 'Opponent HALF COAT Successful.'; titleEl.style.color = '#ff0a0a'; }
+            if (bodyEl) { bodyEl.innerText = `-${points} Tokens`; }
+          }
+        } else {
+          if (isMyTeamDeclarer) {
+            if (titleEl) { titleEl.innerText = 'HALF COAT Failed!'; titleEl.style.color = '#ff0a0a'; }
+            if (bodyEl) { bodyEl.innerHTML = `You lost a trick.<br>-${points} Tokens`; }
+          } else {
+            if (titleEl) { titleEl.innerText = 'Opponent HALF COAT Failed!'; titleEl.style.color = '#00f7ff'; }
+            if (bodyEl) { bodyEl.innerText = `+${points} Tokens`; }
+          }
+        }
+        roundModal.classList.remove('hidden');
+      }
     }
   }
 }

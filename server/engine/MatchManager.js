@@ -35,6 +35,15 @@ export class MatchManager {
     this.fullcoatCurrentAskerIndex = 0; // Which opponent is being asked (0 or 1)
     this.fullcoatCurrentAskerId = null; // ID of the player currently seeing FULLCOAT/CONTINUE
     this.fullcoatFailed = false;        // Explicit tracking for Full Count failure state
+
+    // Halfcoat state variables
+    this.isHalfcoatActive = false;
+    this.halfcoatDeclarerId = null;
+    this.halfcoatFailed = false;
+    this.halfcoatSummary = null;
+    this.halfcoatCountdown = null;
+    this.halfcoatCountdownTimer = null;
+    this.halfcoatDecliners = new Set();
   }
 
   initializeMatch() {
@@ -58,6 +67,12 @@ export class MatchManager {
         break;
       case CONFIG.GAME_PHASES.TRUMP_SELECTION:
         this.promptTrumpSelection();
+        break;
+      case CONFIG.GAME_PHASES.HALFCOAT_DECISION:
+        this.startHalfcoatCountdown();
+        break;
+      case CONFIG.GAME_PHASES.HALFCOAT_TRUMP_SELECTION:
+        // Wait for declarer to pick new trump
         break;
       case CONFIG.GAME_PHASES.FULLCOAT_DECISION:
       case CONFIG.GAME_PHASES.FULLCOAT_EXCHANGE:
@@ -97,6 +112,18 @@ export class MatchManager {
     this.fullcoatCurrentAskerIndex = 0;
     this.fullcoatCurrentAskerId = null;
     this.fullcoatFailed = false;
+
+    // Reset halfcoat state
+    this.isHalfcoatActive = false;
+    this.halfcoatDeclarerId = null;
+    this.halfcoatFailed = false;
+    this.halfcoatSummary = null;
+    this.halfcoatCountdown = null;
+    if (this.halfcoatCountdownTimer) {
+      clearInterval(this.halfcoatCountdownTimer);
+      this.halfcoatCountdownTimer = null;
+    }
+    this.halfcoatDecliners = new Set();
 
     this.dealer.prepareDeck();
     this.dealer.dealToAll(this.players, CONFIG.CARDS_PER_DEAL);
@@ -160,14 +187,14 @@ export class MatchManager {
       trumpSuit: selectedCard.suit
     });
 
-    // Determine the OPPOSING team (non-trump team) for Fullcoat decision
+    // Determine the OPPOSING team (non-trump team) for Fullcoat/Halfcoat decisions
     const trumpTeam = this.roundManager.trumpTeam; // 'A' (seats 0,2) or 'B' (seats 1,3)
     const opponentSeats = trumpTeam === 'A' ? [1, 3] : [0, 2];
     this.fullcoatOpponents = opponentSeats.map(seat => this.players.find(p => p.seat === seat));
     this.fullcoatCurrentAskerIndex = 0;
     this.fullcoatCurrentAskerId = this.fullcoatOpponents[0].id;
 
-    this.transitionTo(CONFIG.GAME_PHASES.SECOND_DEAL);
+    this.transitionTo(CONFIG.GAME_PHASES.HALFCOAT_DECISION);
   }
 
   /**
@@ -181,14 +208,14 @@ export class MatchManager {
     this.roundManager.setTrump(suit);
     this.emitCallback('TRUMP_SUIT_ANNOUNCED', { suit });
 
-    // Determine the OPPOSING team (non-trump team) for Fullcoat decision
+    // Determine the OPPOSING team (non-trump team) for Fullcoat/Halfcoat decisions
     const trumpTeam = this.roundManager.trumpTeam; // 'A' (seats 0,2) or 'B' (seats 1,3)
     const opponentSeats = trumpTeam === 'A' ? [1, 3] : [0, 2];
     this.fullcoatOpponents = opponentSeats.map(seat => this.players.find(p => p.seat === seat));
     this.fullcoatCurrentAskerIndex = 0;
     this.fullcoatCurrentAskerId = this.fullcoatOpponents[0].id;
 
-    this.transitionTo(CONFIG.GAME_PHASES.SECOND_DEAL);
+    this.transitionTo(CONFIG.GAME_PHASES.HALFCOAT_DECISION);
   }
 
   promptFullcoatTrumpSelection() {
@@ -218,6 +245,145 @@ export class MatchManager {
     } else {
       this.transitionTo(CONFIG.GAME_PHASES.FULLCOAT_DECISION);
     }
+  }
+
+  // ── Half Coat Methods ──
+
+  /** Starts 5-second countdown for opponents to declare Half Coat */
+  startHalfcoatCountdown() {
+    this.halfcoatCountdown = 5;
+    this.emitCallback('HALFCOAT_COUNTDOWN_START', { countdown: this.halfcoatCountdown });
+
+    this.halfcoatCountdownTimer = setInterval(() => {
+      this.halfcoatCountdown -= 1;
+      this.emitCallback('HALFCOAT_COUNTDOWN_TICK', { countdown: this.halfcoatCountdown });
+
+      if (this.halfcoatCountdown <= 0) {
+        this.clearHalfcoatCountdown();
+        // No Half Coat declared — continue to normal flow
+        this.transitionTo(CONFIG.GAME_PHASES.SECOND_DEAL);
+      }
+    }, 1000);
+  }
+
+  /** Clears the Half Coat countdown timer */
+  clearHalfcoatCountdown() {
+    if (this.halfcoatCountdownTimer) {
+      clearInterval(this.halfcoatCountdownTimer);
+      this.halfcoatCountdownTimer = null;
+    }
+    this.halfcoatCountdown = null;
+  }
+
+  /** An opponent player declines to declare Half Coat */
+  declineHalfcoat(playerId) {
+    if (this.phase !== CONFIG.GAME_PHASES.HALFCOAT_DECISION) return;
+    this.halfcoatDecliners.add(playerId);
+    
+    // If all opponents have declined, skip the rest of the countdown
+    if (this.halfcoatDecliners.size >= this.fullcoatOpponents.length) {
+      this.clearHalfcoatCountdown();
+      this.transitionTo(CONFIG.GAME_PHASES.SECOND_DEAL);
+    }
+  }
+
+  /**
+   * An opponent attempts to declare Half Coat.
+   * Validates Condition 1: hand must have at least 2 different suits.
+   * @param {string} playerId
+   */
+  declareHalfcoat(playerId) {
+    if (this.phase !== CONFIG.GAME_PHASES.HALFCOAT_DECISION) {
+      throw new Error('Invalid phase for Half Coat declaration.');
+    }
+
+    const player = this.players.find(p => p.id === playerId);
+    if (!player) throw new Error('Player not found.');
+
+    // Only opponents (non-trump team) can declare
+    const trumpTeam = this.roundManager.trumpTeam;
+    if (player.team === trumpTeam) {
+      throw new Error('Only opponent players can declare Half Coat.');
+    }
+
+    // Condition 1: Must have at least 2 different suits in hand
+    const suits = new Set(player.hand.map(c => c.suit));
+    if (suits.size < 2) {
+      throw new Error('Half Coat requires at least 2 different suits in your hand.');
+    }
+
+    // Stop the countdown — this player is declaring
+    this.clearHalfcoatCountdown();
+    this.halfcoatDeclarerId = playerId;
+
+    this.emitCallback('HALFCOAT_DECLARED', {
+      declarerId: playerId,
+      declarerName: player.username
+    });
+
+    // Transition to trump selection for the declarer
+    this.transitionTo(CONFIG.GAME_PHASES.HALFCOAT_TRUMP_SELECTION);
+  }
+
+  /**
+   * Half Coat declarer selects a new trump suit.
+   * Validates Condition 2: at least one card of chosen suit must exist in the trump team's hands.
+   * @param {string} playerId
+   * @param {string} suit
+   */
+  selectHalfcoatTrump(playerId, suit) {
+    if (this.phase !== CONFIG.GAME_PHASES.HALFCOAT_TRUMP_SELECTION) {
+      throw new Error('Invalid phase for Half Coat trump selection.');
+    }
+    if (this.halfcoatDeclarerId !== playerId) {
+      throw new Error('Only the Half Coat declarer can select trump.');
+    }
+
+    // Validate suit
+    if (!CONFIG.SUITS.includes(suit)) {
+      throw new Error('Invalid suit selected.');
+    }
+
+    // Condition 2: At least one card of chosen suit must exist in the trump team's hands
+    const trumpTeam = this.roundManager.trumpTeam;
+    const trumpTeamSeats = trumpTeam === 'A' ? [0, 2] : [1, 3];
+    const trumpTeamPlayers = trumpTeamSeats.map(seat => this.players.find(p => p.seat === seat));
+    const hasChosenSuit = trumpTeamPlayers.some(p =>
+      p.hand.some(c => c.suit === suit)
+    );
+
+    if (!hasChosenSuit) {
+      throw new Error('Invalid Half Coat: the opposing team has no cards of the chosen suit. Choose another suit.');
+    }
+
+    // Half Coat is valid — activate it
+    this.isHalfcoatActive = true;
+    this.roundManager.tricksPerHand = 4;
+    this.roundManager.setTrump(suit);
+    this.emitCallback('TRUMP_SUIT_ANNOUNCED', { suit });
+
+    // The declarer plays alone; their teammate is out
+    const declarer = this.players.find(p => p.id === playerId);
+    const declarerTeamSeats = declarer.team === 'A' ? [0, 2] : [1, 3];
+    const partner = this.players.find(p =>
+      declarerTeamSeats.includes(p.seat) && p.id !== playerId
+    );
+    if (partner) {
+      partner.clearHand();
+      partner.isOut = true;
+    }
+
+    // Declarer leads first
+    this.roundManager.activeTurnSeat = declarer.seat;
+
+    this.emitCallback('HALFCOAT_ACTIVATED', {
+      declarerId: playerId,
+      declarerName: declarer.username,
+      trumpSuit: suit,
+      partnerOutId: partner ? partner.id : null
+    });
+
+    this.transitionTo(CONFIG.GAME_PHASES.PLAYING);
   }
 
   notifyActiveTurn() {
@@ -282,6 +448,20 @@ export class MatchManager {
           }
         }
 
+        if (this.isHalfcoatActive) {
+          const declarer = this.players.find(p => p.id === this.halfcoatDeclarerId);
+          const halfcoatTeam = declarer ? declarer.team : null;
+          const trickWinnerTeam = result.trickResult.winningTeam;
+          if (halfcoatTeam && trickWinnerTeam !== halfcoatTeam) {
+            this.halfcoatFailed = true;
+            this.isResolvingTrick = false;
+            if (this.phase === CONFIG.GAME_PHASES.PLAYING) {
+              this.transitionTo(CONFIG.GAME_PHASES.HAND_END);
+            }
+            return;
+          }
+        }
+
         if (result.isHandComplete) {
           this.isResolvingTrick = false;
           if (this.phase === CONFIG.GAME_PHASES.PLAYING) {
@@ -299,6 +479,45 @@ export class MatchManager {
   }
 
   finishHand() {
+    // Half Coat scoring path
+    if (this.isHalfcoatActive) {
+      const halfcoatDeclarer = this.players.find(p => p.id === this.halfcoatDeclarerId);
+      const halfcoatDeclarerTeam = halfcoatDeclarer ? halfcoatDeclarer.team : null;
+      const SummaryData = this.scoreManager.finalizeHand(
+        this.roundManager.trumpTeam,
+        false,   // isFullcoatActive
+        null,    // fullcoatDeclarerTeam
+        false,   // fullcoatFailed
+        true,    // isHalfcoatActive
+        halfcoatDeclarerTeam,
+        this.halfcoatFailed
+      );
+
+      this.emitCallback('ROUND_OVER_SUMMARY', SummaryData);
+
+      this.halfcoatSummary = {
+        win: SummaryData.isHalfcoatWin,
+        points: SummaryData.allocatedPoints
+      };
+
+      this.transitionTo(CONFIG.GAME_PHASES.ROUND_END);
+
+      setTimeout(() => {
+        this.isHalfcoatActive = false;
+        this.halfcoatSummary = null;
+
+        const matchWinnerTeam = this.scoreManager.checkMatchWinner();
+        if (matchWinnerTeam) {
+          this.transitionTo(CONFIG.GAME_PHASES.MATCH_END);
+        } else {
+          this.players.forEach(p => p.clearHand());
+          this.dealer.rotateDealer();
+          this.transitionTo(CONFIG.GAME_PHASES.FIRST_DEAL);
+        }
+      }, 5000);
+      return;
+    }
+
     const declarer = this.players.find(p => p.id === this.fullcoatDeclarerId);
     const fullcoatDeclarerTeam = declarer ? declarer.team : null;
     const SummaryData = this.scoreManager.finalizeHand(

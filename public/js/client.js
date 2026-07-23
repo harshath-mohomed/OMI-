@@ -16,6 +16,7 @@ class GameClient {
     this.localState = { seat: null, currentGameState: null };
     this.isSinglePlayer = false;
     this.selectedExchangeCards = [];
+    this.hasDeclinedHalfcoat = false;
     this.motoCatalog = {
       'ceaser': { label: 'Ceaser', icon: '/src/icons/ceaser.svg' },
       'dagger-rose': { label: 'Dagger Rose', icon: '/src/icons/dagger-rose.svg' },
@@ -285,6 +286,15 @@ class GameClient {
       this.socket.emit('playCard', { cardId });
     });
 
+    document.getElementById('btn-halfcoat-declare')?.addEventListener('click', () => {
+      this.socket.emit('declareHalfcoat');
+    });
+
+    document.getElementById('btn-halfcoat-decline')?.addEventListener('click', () => {
+      this.socket.emit('declineHalfcoat');
+      this.hasDeclinedHalfcoat = true;
+    });
+
     document.getElementById('btn-fullcoat-declare')?.addEventListener('click', () => {
       this.socket.emit('declareFullcoat', { action: 'fullcoat' });
     });
@@ -517,6 +527,10 @@ class GameClient {
         this.selectedExchangeCards = [];
       }
 
+      if (state.phase !== 'HALFCOAT_DECISION') {
+        this.hasDeclinedHalfcoat = false;
+      }
+
       const isExchanger = state.isFullcoatActive &&
                           (this.localState.player &&
                            (this.localState.player.id === state.fullcoatDeclarerId ||
@@ -529,6 +543,7 @@ class GameClient {
       this.renderer.renderTrick(state.currentTrick || [], this.localState.seat);
       this.renderer.updateMetadata(state, this.localState.seat);
       this.renderer.renderFullcoat(state, this.localState.player, this.selectedExchangeCards);
+      this.renderer.renderHalfcoat(state, this.localState.player, this.hasDeclinedHalfcoat);
 
      const trumpModal = document.getElementById('trump-modal');
 const chooserSeat = state.trumpChooserId
@@ -539,6 +554,9 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
   trumpModal.classList.remove('hidden');
 } else if (state.phase === 'FULLCOAT_TRUMP_SELECTION' &&
            state.fullcoatDeclarerId === this.localState.player?.id) {
+  trumpModal.classList.remove('hidden');
+} else if (state.phase === 'HALFCOAT_TRUMP_SELECTION' &&
+           state.halfcoatDeclarerId === this.localState.player?.id) {
   trumpModal.classList.remove('hidden');
 } else {
   trumpModal.classList.add('hidden');
@@ -704,6 +722,27 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
             gameStatusText.innerText = `Waiting for ${declarerName} to select Fullcoat Trump...`;
           }
         }
+      } else if (state.phase === 'HALFCOAT_TRUMP_SELECTION') {
+        const declarer = (state.players || []).find(p => p.id === state.halfcoatDeclarerId);
+        const declarerName = declarer ? declarer.username : 'Declarer';
+        const isDeclarer = state.halfcoatDeclarerId === this.localState.player?.id;
+
+        if (isDeclarer) {
+          if (gameStatusBanner) gameStatusBanner.classList.add('hidden');
+          if (chooserControls) chooserControls.classList.add('hidden');
+          const blindOption = document.getElementById('blind-trump-container');
+          if (blindOption) {
+            blindOption.classList.add('hidden');
+          }
+          trumpModal?.classList.remove('hidden');
+        } else {
+          if (chooserControls) chooserControls.classList.add('hidden');
+          trumpModal?.classList.add('hidden');
+          if (gameStatusBanner && gameStatusText) {
+            gameStatusBanner.classList.remove('hidden');
+            gameStatusText.innerText = `Waiting for ${declarerName} to select Half Coat Trump...`;
+          }
+        }
       } else {
         trumpModal?.classList.add('hidden');
         if (gameStatusBanner) gameStatusBanner.classList.add('hidden');
@@ -711,7 +750,7 @@ if (state.phase === 'TRUMP_SELECTION' && chooserSeat === this.localState.seat) {
         if (blindOptionOther) blindOptionOther.classList.add('hidden');
 
         // After TRUMP_SELECTION phase ends: show revealed card only if not yet dismissed
-        const hasSelectedBlind = state.blindTrumpState && state.blindTrumpState.status === 'SELECTED' && !state.isFullcoatActive;
+        const hasSelectedBlind = state.blindTrumpState && state.blindTrumpState.status === 'SELECTED' && !state.isFullcoatActive && !state.isHalfcoatActive;
         if (isChooser && hasSelectedBlind && !this._blindCardDismissed) {
           if (chooserControls) {
             chooserControls.classList.remove('hidden');
